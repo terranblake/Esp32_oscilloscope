@@ -106,7 +106,12 @@ void setup () {
 
     // start web server 
     httpServer *httpSrv = new httpServer (httpRequestHandler,           // a callback function that will handle HTTP requests that are not handled by webServer itself
-                                          wsRequestHandler);            // a callback function that will handle WS requests, NULL to ignore WS requests
+                                          wsRequestHandler,            // a callback function that will handle WS requests, NULL to ignore WS requests
+                                          "0.0.0.0",                   // serverIP (default)
+                                          80,                          // serverPort (default)
+                                          NULL,                        // firewallCallback (default)
+                                          "/"                          // httpServerHomeDirectory (set to root)
+                                          );
     if (!httpSrv || httpSrv->state () != httpServer::RUNNING) {
         #ifdef __DMESG__
             dmesgQueue << "[httpServer] did not start";
