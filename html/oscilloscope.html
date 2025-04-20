@@ -553,80 +553,92 @@
 						endianArray = new Uint16Array (1); endianArray [0] = 0xAABB;
 						ws.send (endianArray);
 
-            // --- Build new query string --- 
-            let params = [];
+            // --- Build NEW Configuration Object ---
+            let config = {
+                timebase: 0,
+                channels: []
+            };
 
-            // Global settings (Frequency -> SamplingTime/Unit, ScreenWidthTime/Unit)
-            let samplingTime = 0;
-            let samplingTimeUnit = 'us';
-            let screenWidthTime = 0;
-            let screenWidthTimeUnit = 'us';
+            // Calculate timebase (sampling time in microseconds)
+            // The old code used a slider value (1-17) to map to complex sampling/screen times.
+            // The C++ side now expects just the sampling time (timebase) in us.
+            // We need to simplify this mapping or adjust the slider.
+            // Let's adjust the slider values directly represent timebase in us for simplicity?
+            // Or, keep the mapping for now and extract only the samplingTime.
+            // Let's KEEP the mapping for now and extract samplingTime, assuming 'us' unit.
             const freqValue = document.getElementById('frequency').value;
-            // (Replicate the switch logic from the old code to get times/units)
             switch (freqValue) {
-                case '1':  samplingTime = 27; samplingTimeUnit = 'ms'; screenWidthTime = 10000; screenWidthTimeUnit = 'ms'; break;
-                case '2':  samplingTime = 21; samplingTimeUnit = 'ms'; screenWidthTime = 5000; screenWidthTimeUnit = 'ms'; break;
-                case '3':  samplingTime = 6;  samplingTimeUnit = 'ms'; screenWidthTime = 2000; screenWidthTimeUnit = 'ms'; break;
-                case '4':  samplingTime = 2500; samplingTimeUnit = 'us'; screenWidthTime = 1000000; screenWidthTimeUnit = 'us'; break;
-                case '5':  samplingTime = 1250; samplingTimeUnit = 'us'; screenWidthTime = 500000; screenWidthTimeUnit = 'us'; break;
-                case '6':  samplingTime = 500; samplingTimeUnit = 'us'; screenWidthTime = 200000; screenWidthTimeUnit = 'us'; break;
-                case '7':  samplingTime = 250; samplingTimeUnit = 'us'; screenWidthTime = 100000; screenWidthTimeUnit = 'us'; break;
-                case '8':  samplingTime = 125; samplingTimeUnit = 'us'; screenWidthTime = 50000; screenWidthTimeUnit = 'us'; break;
-                case '9':  samplingTime = 50; samplingTimeUnit = 'us'; screenWidthTime = 20000; screenWidthTimeUnit = 'us'; break;
-                case '10': samplingTime = 43; samplingTimeUnit = 'us'; screenWidthTime = 16667; screenWidthTimeUnit = 'us'; break;
-                case '11': samplingTime = 25; samplingTimeUnit = 'us'; screenWidthTime = 10000; screenWidthTimeUnit = 'us'; break;
-                case '12': samplingTime = 13; samplingTimeUnit = 'us'; screenWidthTime = 5000; screenWidthTimeUnit = 'us'; break;
-                case '13': samplingTime = 7;  samplingTimeUnit = 'us'; screenWidthTime = 2000; screenWidthTimeUnit = 'us'; break;
-                case '14': samplingTime = 3;  samplingTimeUnit = 'us'; screenWidthTime = 1000; screenWidthTimeUnit = 'us'; break;
-                case '15': samplingTime = 2;  samplingTimeUnit = 'us'; screenWidthTime = 500; screenWidthTimeUnit = 'us'; break;
-                case '16': samplingTime = 1;  samplingTimeUnit = 'us'; screenWidthTime = 200; screenWidthTimeUnit = 'us'; break;
-                case '17': samplingTime = 1;  samplingTimeUnit = 'us'; screenWidthTime = 100; screenWidthTimeUnit = 'us'; break;
+                // Cases 1-3 were ms, skip for now or convert?
+                // case '1': config.timebase = 27000; break; // 27ms
+                // case '2': config.timebase = 21000; break; // 21ms
+                // case '3': config.timebase = 6000; break;  // 6ms
+                case '4': config.timebase = 2500; break; // 2500us
+                case '5': config.timebase = 1250; break; // 1250us
+                case '6': config.timebase = 500; break;  // 500us
+                case '7': config.timebase = 250; break;  // 250us
+                case '8': config.timebase = 125; break;  // 125us
+                case '9': config.timebase = 50; break;   // 50us
+                case '10': config.timebase = 43; break;  // 43us (approx)
+                case '11': config.timebase = 25; break;  // 25us
+                case '12': config.timebase = 13; break;  // 13us (approx)
+                case '13': config.timebase = 7; break;   // 7us (approx)
+                case '14': config.timebase = 3; break;   // 3us (approx)
+                case '15': config.timebase = 2; break;   // 2us (approx)
+                case '16': config.timebase = 1; break;   // 1us (approx)
+                case '17': config.timebase = 1; break;  // 1us (Let's map last value to 1us)
+                default: config.timebase = 500; // Default to 500us if something strange happens
             }
-            params.push(`st=${samplingTime}`);
-            params.push(`stu=${samplingTimeUnit}`);
-            params.push(`swt=${screenWidthTime}`);
-            params.push(`swtu=${screenWidthTimeUnit}`);
+            // Ensure timebase is at least 1
+            config.timebase = Math.max(1, config.timebase);
 
-            // Channel settings
+            // Populate channel configurations
             for (let i = 0; i < MAX_CHANNELS; i++) {
-                if (document.getElementById(`ch${i}_enable`).checked) {
+                let chConfig = {
+                    ch: i,
+                    active: document.getElementById(`ch${i}_enable`).checked,
+                    analog: document.getElementById(`ch${i}_analog`).checked,
+                    gpio: parseInt(document.getElementById(`ch${i}_gpio`).value) || 0,
+                    sens: 0, // Default values
+                    pos: 0,
+                    trig_pos_en: false,
+                    trig_pos_val: 0,
+                    trig_neg_en: false,
+                    trig_neg_val: 0
+                };
+
+                if (chConfig.active) {
                     enabledChannelIndices.push(i); // Store the index of the enabled channel
-                    const type = document.getElementById(`ch${i}_analog`).checked ? 'analog' : 'digital';
-                    const gpio = document.getElementById(`ch${i}_gpio`).value;
-                    let chParam = `ch${i}=${type},${gpio}`;
-                    let settings = { type: type, gpio: gpio }; // Basic settings
+                    activeChannelSettings[i] = {}; // Initialize settings for active channel
+                    activeChannelSettings[i].type = chConfig.analog ? 'analog' : 'digital';
+                    activeChannelSettings[i].gpio = chConfig.gpio;
 
-                    if (type === 'analog') {
-                        const sensitivity = document.getElementById(`ch${i}_sensitivity`).value;
-                        const position = document.getElementById(`ch${i}_position`).value;
-                        chParam += `,s${sensitivity},p${position}`;
-                        settings.sensitivity = sensitivity; // Store analog settings
-                        settings.position = position;
-                        
-                        // Only include trigger params for channel 0 if enabled
-                        if (i === 0) {
-                             const posTrig = document.getElementById('posTrigger').checked ? 1 : 0;
-                             const posThresh = document.getElementById('posTreshold').value;
-                             const negTrig = document.getElementById('negTrigger').checked ? 1 : 0;
-                             const negThresh = document.getElementById('negTreshold').value;
-                             // Add trigger params only if at least one trigger is enabled
-                             if (posTrig || negTrig) {
-                                chParam += `,pt${posTrig},ptt${posThresh},nt${negTrig},ntt${negThresh}`;
-                             }
-                        }
+                    if (chConfig.analog) {
+                        chConfig.sens = parseInt(document.getElementById(`ch${i}_sensitivity`).value) || 0;
+                        chConfig.pos = parseInt(document.getElementById(`ch${i}_position`).value) || 0;
+                        activeChannelSettings[i].sensitivity = chConfig.sens;
+                        activeChannelSettings[i].position = chConfig.pos;
                     }
-                    params.push(chParam);
-                    activeChannelSettings[i] = settings; // Store settings indexed by original channel index
+                    
+                    // Handle Trigger settings (Only apply if CH0 is active and analog)
+                    if (i === 0 && chConfig.active && chConfig.analog) {
+                        chConfig.trig_pos_en = document.getElementById('posTrigger').checked;
+                        chConfig.trig_pos_val = parseInt(document.getElementById('posTreshold').value) || 0;
+                        chConfig.trig_neg_en = document.getElementById('negTrigger').checked;
+                        chConfig.trig_neg_val = parseInt(document.getElementById('negTreshold').value) || 0;
+                    }
                 }
+                config.channels.push(chConfig);
             }
+            console.log("Generated Config:", config);
             console.log("Enabled Channel Indices:", enabledChannelIndices);
-            console.log("Active Channel Settings:", activeChannelSettings);
+            console.log("Active Channel Settings:", activeChannelSettings); // Keep this for drawSignal
 
-            const startCommand = "GET /runOscilloscope?" + params.join("&"); // Build query string
+            // Convert the config object to a JSON string
+            const configJson = JSON.stringify(config);
 
-						// --- Send new start command ---
-						console.log("Sending command: " + startCommand);
-						ws.send (startCommand);
+						// --- Send the JSON configuration string --- 
+						console.log("Sending JSON config: " + configJson);
+						ws.send(configJson);
 
           };
 
