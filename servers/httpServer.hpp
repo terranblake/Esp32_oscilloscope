@@ -186,7 +186,11 @@
                   ) {
                       // create a local copy of parameters for later use
                       __connectionSocket__ = connectionSocket;
-                      __wsRequest__ = wsRequest;
+                      if (wsRequest) {
+                           __requestLine__ = wsRequest; // Copy the request line content
+                      } else {
+                           __requestLine__ = ""; // Ensure it's initialized
+                      }
                       __clientIP__ = clientIP;
                       __serverIP__ = serverIP;
 
@@ -241,6 +245,8 @@
         char *getClientIP () { return __clientIP__; }
 
         char *getServerIP () { return __serverIP__; }
+
+        cstring getRequest() { return __requestLine__; } 
   
         void closeWebSocket ()  { 
                                   // close connection socket
@@ -252,7 +258,7 @@
                                   if (connectionSocket > -1) close (connectionSocket);                      
                                 }
 
-        char *getWsRequest () { return __wsRequest__; }
+        char *getWsRequest () { return __requestLine__; }
     
         enum WEBSOCKET_DATA_TYPE {
           NOT_AVAILABLE = 0,          // no data is available to be read 
@@ -453,7 +459,7 @@
         unsigned long __lastActive__ = millis (); // time-out detection
 
         int __connectionSocket__ = -1;
-        char *__wsRequest__ = NULL;
+        cstring __requestLine__ = ""; // Store the request line
         char *__clientIP__ = NULL;
         char *__serverIP__ = NULL;
 
