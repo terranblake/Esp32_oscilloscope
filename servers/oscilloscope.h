@@ -98,14 +98,32 @@
         int16_t signal2;                       // signal value of 2nd GPIO if requested   
         int16_t deltaTime;                     // sample time - offset from previous sample in ms or us  
     }; // = 6 bytes per sample
-    
+
+    // Structure for a multi-channel sample (can hold analog or digital)
+    struct oscMultiChannelSample {
+        int16_t delta_time;                         // Time delta from previous sample in us (or special value like -1 for dummy message)
+        uint8_t num_channels;                       // Actual number of channels included in this sample
+        int16_t values[MAX_OSC_CHANNELS];           // Array to hold values for up to MAX_OSC_CHANNELS
+                                                    // Size: 2 (delta_time) + 1 (num_channels) + 1 (padding?) + (2 * MAX_OSC_CHANNELS) bytes
+                                                    // E.g., MAX_OSC_CHANNELS=4 -> 2+1+1 + 8 = 12 bytes? Check alignment.
+                                                    // Let's use 16 bytes for safety/alignment with 4 channels.
+                                                    // Let's recalculate: 2 (delta) + 1 (num) + 1 (padding) + 2*4 (values) = 12 bytes. Likely aligns to 4 bytes, so 12 bytes is probably correct.
+    } __attribute__((packed)); // Use packed attribute to avoid padding issues if necessary, though maybe not needed here.
+
+    // Define buffer size based on multi-channel samples
+    // Example calculation: Target ~1.5kB buffer. If oscMultiChannelSample is ~12 bytes:
+    // 1500 / 12 = 125 samples. Let's use 128 for power of 2.
+    #define MAX_OSC_SAMPLES_PER_PACKET 128
+
     struct oscSamples {                               // buffer with samples
         union {
-            oscI2sSample        samplesI2sSignal  [OSCILLOSCOPE_I2S_BUFFER_SIZE];     
-            osc1SignalSample    samples1Signal    [OSCILLOSCOPE_1SIGNAL_BUFFER_SIZE];
-            osc2SignalsSample   samples2Signals   [OSCILLOSCOPE_2SIGNALS_BUFFER_SIZE];
+            // Keep old structures for reference/compatibility if needed, but comment out/remove if unused
+            // oscI2sSample        samplesI2sSignal  [OSCILLOSCOPE_I2S_BUFFER_SIZE];
+            // osc1SignalSample    samples1Signal    [OSCILLOSCOPE_1SIGNAL_BUFFER_SIZE];
+            // osc2SignalsSample   samples2Signals   [OSCILLOSCOPE_2SIGNALS_BUFFER_SIZE];
+            oscMultiChannelSample samplesMultiChannel [MAX_OSC_SAMPLES_PER_PACKET]; // New buffer for multi-channel data
         };
-        unsigned int sampleCount;                      // number of samples in the buffer
+        unsigned int sampleCount;                      // number of samples (oscMultiChannelSample structs) in the buffer
         bool samplesAreReady;                          // is the buffer ready for sending
     };
 
