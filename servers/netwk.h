@@ -788,15 +788,16 @@
         arp (-1); // call arp immediatelly after network is set up to obtain the pointer to ARP table    
 
         // rename hostname for all adapters
-        esp_netif_t *netif = esp_netif_next_unsafe (NULL);
+        esp_netif_t *netif = esp_netif_next (NULL);
         while (netif) {
             if (esp_netif_set_hostname (netif, HOSTNAME) != ESP_OK) {
                 #ifdef __DMESG__
-                    dmesgQueue << "[network] couldn't change adapter's hostname";
+                    dmesg (__func__, "[network] couldn't change adapter's hostname");
+                #else
+                    cout << "[network] couldn't change adapter's hostname" << endl;
                 #endif
-                cout << "[network] couldn't change adapter's hostname" << endl;
             }
-            netif = esp_netif_next_unsafe (netif);
+            netif = esp_netif_next (netif);
         }
 
     }
