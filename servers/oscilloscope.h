@@ -481,13 +481,34 @@
 
             unsigned long screenTime = 0;                                       // in us - how far we have already got from the left of the screen (we'll compare this value with screenWidthTime)
             unsigned long deltaTime = 0;                                        // in us - delta from previous sample
-            unsigned long lastSampleMicroseconds = micros ();                   // for sample timing                
+            unsigned long lastSampleMicroseconds = micros ();                   // for sample timing
             unsigned long newSampleMicroseconds = lastSampleMicroseconds;
 
-            // Insert first dummy sample to read-buffer this tells javascript client to start drawing from the left of the screen. Please note that it also tells javascript client how many signals are in each sample
+            // --- Generate Multi-Channel Dummy/Config Message --- 
+            uint8_t active_channel_mask = 0;
+            uint8_t analog_type_mask = 0; // All digital in this reader
+            for (int i = 0; i < MAX_OSC_CHANNELS; ++i) {
+                if (channelConfig[i].is_active && !channelConfig[i].is_analog) { // Filter for active digital
+                    active_channel_mask |= (1 << i);
+                    // analog_type_mask remains 0 for digital
+                }
+            }
+            readBuffer->samplesMultiChannel[0].delta_time = -1; // Indicate config message
+            readBuffer->samplesMultiChannel[0].num_channels = active_channel_mask; // Store active channel mask
+            readBuffer->samplesMultiChannel[0].values[0] = (int16_t)analog_type_mask; // Store type mask (all 0)
+            // Clear remaining values in dummy message for clarity
+            for (int k = 1; k < MAX_OSC_CHANNELS; ++k) { 
+                readBuffer->samplesMultiChannel[0].values[k] = 0;
+            }
+            readBuffer->sampleCount = 1;
+            // --- End Dummy Message Generation ---
+
+            // Remove old dummy message logic
+            /*
             if (noOfSignals == 1) readBuffer->samples1Signal [0] = {-2, -2}; // no real data sample can look like this
             else                  readBuffer->samples2Signals [0] = {-3, -3, -3}; // no real data sample can look like this
             readBuffer->sampleCount = 1;
+            */
 
             if (triggeredMode) { // if no trigger is set then skip this (waiting) part and start sampling immediatelly
 
@@ -683,10 +704,37 @@
             unsigned long lastSampleMicroseconds = micros ();                   // for sample timing                
             unsigned long newSampleMicroseconds = lastSampleMicroseconds;
 
-            // Insert first dummy sample to read-buffer this tells javascript client to start drawing from the left of the screen. Please note that it also tells javascript client how many signals are in each sample
-            if (noOfSignals == 1) readBuffer->samples1Signal [0] = {-2, -2}; // no real data sample can look like this
-            else                  readBuffer->samples2Signals [0] = {-3, -3, -3}; // no real data sample can look like this
+            // --- Generate Multi-Channel Dummy/Config Message --- 
+            uint8_t active_channel_mask = 0;
+            uint8_t analog_type_mask = 0;
+            for (int i = 0; i < MAX_OSC_CHANNELS; ++i) {
+                if (channelConfig[i].is_active) { // Assumes only analog channels are active in this reader
+                    active_channel_mask |= (1 << i);
+                    if (channelConfig[i].is_analog) {
+                         analog_type_mask |= (1 << i); // Mark as analog
+                    } // Else: digital (should not happen if analog mode forced)
+                }
+            }
+            readBuffer->samplesMultiChannel[0].delta_time = -1; // Indicate config message
+            readBuffer->samplesMultiChannel[0].num_channels = active_channel_mask; // Store active channel mask here
+            readBuffer->samplesMultiChannel[0].values[0] = (int16_t)analog_type_mask; // Store type mask in values[0]
+            // Clear remaining values in dummy message for clarity
+            for (int k = 1; k < MAX_OSC_CHANNELS; ++k) { 
+                readBuffer->samplesMultiChannel[0].values[k] = 0;
+            }
             readBuffer->sampleCount = 1;
+            // --- End Dummy Message Generation ---
+
+            /* --- REMOVED old placeholder/TODO for dummy message ---
+            // TODO: Define and insert the correct multi-channel dummy message.
+            // This message needs to convey the number and type (A/D) of active channels.
+            // For now, using a placeholder. The client JS needs updating to parse this.
+            readBuffer->samplesMultiChannel[0].num_channels = numActiveAnalog; // Example placeholder
+            readBuffer->samplesMultiChannel[0].delta_time = -1; // Indicate dummy message
+            for(int k=0; k<numActiveAnalog; ++k) readBuffer->samplesMultiChannel[0].values[k] = -1; // Placeholder values
+            readBuffer->sampleCount = 1;
+            */
+
 
             if (triggeredMode) { // if no trigger is set then skip this (waiting) part and start sampling immediatelly
 
