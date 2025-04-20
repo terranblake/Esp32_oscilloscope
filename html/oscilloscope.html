@@ -527,8 +527,14 @@
       }
 
       var webSocket = null;
-      var activeChannelSettings = {}; // Store settings of active channels
+      var activeChannelSettings = {}; // Store UI settings of active channels (sensitivity, pos)
       var enabledChannelIndices = []; // Store the original indices of enabled channels
+      var receivedChannelConfig = { // Store config received from ESP32 dummy message
+          activeMask: 0,
+          typeMask: 0,
+          numActive: 0,
+          channelMap: [] // Map received data index to original channel index
+      };
 
       function stopOscilloscope () {
         if (webSocket != null) {
@@ -645,21 +651,102 @@
           ws.onmessage = function (evt) {
             if (typeof (evt.data) === 'string' || evt.data instanceof String) { // UTF-8 formatted string - error message from ESP32 server
               alert ('Error message from server: ' + evt.data); // oscilloscope code reporting error (synatx error, ...)
-              enableDisableControls (false);
+              // Consider stopping or resetting UI state
+              stopOscilloscope();
+              enableDisableControls(false);
             }
             if (evt.data instanceof Blob) { // binary data - array of samples
-              // receive binary data as blob and then convert it into array buffer and draw oscilloscope signal
-              var myInt16Array = null;
-              var myArrayBuffer = null;
-              var myFileReader = new FileReader ();
-              myFileReader.onload = function (event) {
-                myArrayBuffer = event.target.result;
-                myInt16Array = new Int16Array (myArrayBuffer);
-                // console.log (myInt16Array.length); // the number of 16-bit words received
-                // console.log (myInt16Array);
-                drawSignal (myInt16Array, 0, myInt16Array.length - 1); 
-              };
-              myFileReader.readAsArrayBuffer (evt.data);
+                var reader = new FileReader();
+                reader.onload = function() {
+                    const arrayBuffer = reader.result;
+                    const dataView = new DataView(arrayBuffer);
+                    let byteOffset = 0;
+                    let littleEndian = true; // Assuming ESP32 is little-endian
+
+                    // --- Check for Dummy/Config Message --- 
+                    if (arrayBuffer.byteLength >= 4) { // Min size for delta_time + num_channels
+                        const firstDeltaTime = dataView.getInt16(byteOffset, littleEndian);
+                        
+                        if (firstDeltaTime === -1) {
+                            console.log("Received config message");
+                            // Parse masks (Option B format)
+                            receivedChannelConfig.activeMask = dataView.getUint8(byteOffset + 2, littleEndian);
+                            receivedChannelConfig.typeMask = dataView.getInt16(byteOffset + 4, littleEndian) & 0xFF; // Read int16, take lower 8 bits
+                            
+                            // Build map from data index to original channel index & count active
+                            receivedChannelConfig.channelMap = [];
+                            receivedChannelConfig.numActive = 0;
+                            for (let i = 0; i < MAX_CHANNELS; i++) {
+                                if ((receivedChannelConfig.activeMask >> i) & 1) {
+                                    receivedChannelConfig.channelMap.push(i);
+                                    receivedChannelConfig.numActive++;
+                                }
+                            }
+                            console.log("Parsed Config:", receivedChannelConfig);
+
+                            // Re-draw background based on received config? Or assume UI matches?
+                            drawBackgroundAndCalculateParameters(); // Redraw with potentially new screenWidthTime
+                            restartDrawingSignal = true; // Ensure drawing starts fresh
+
+                            // Check if there's more data in this packet (shouldn't be, but handle)
+                            // Size of oscMultiChannelSample struct (approx 2 + 1 + 1 + 2*MAX_CHANNELS = 4 + 2*4 = 12 bytes? Needs verification based on C struct packing/size)
+                            // Let's calculate based on known fields: delta(2) + num(1) = 3 bytes minimum readable info
+                            // The C struct oscMultiChannelSample likely takes more due to the array.
+                            // Let's assume sizeof(oscMultiChannelSample) = 12 for MAX_CHANNELS=4 based on C calculation
+                            const SIZEOF_SAMPLE = 2 + 1 + (2 * MAX_CHANNELS) + 1; // delta_time(2) + num_channels(1) + values(2*MAX) + padding(1?)= 12 for MAX=4
+                            // Let's try a pragmatic size calculation: 2 (delta) + 1 (num) + 2*MAX_CHANNELS = 3 + 8 = 11 -> aligns to 12?
+                            // Assume 12 bytes per sample struct for now.
+                            const sampleStructSize = 12; 
+                            byteOffset += sampleStructSize; 
+                        } else {
+                            // Not a config message, reset byteOffset to parse from start
+                            byteOffset = 0;
+                        }
+                    }
+                    
+                    // --- Parse Actual Sample Data --- 
+                    let samples = [];
+                    const sampleStructSize = 12; // Assumed size from above
+                    while (byteOffset + sampleStructSize <= arrayBuffer.byteLength) {
+                        let sample = {};
+                        sample.deltaTime = dataView.getInt16(byteOffset, littleEndian);
+                        byteOffset += 2;
+                        // The num_channels field in data packets *should* contain the count of values actually present
+                        let numValuesInSample = dataView.getUint8(byteOffset, littleEndian);
+                        byteOffset += 1;
+                        // Skip potential padding byte if struct aligns to 4 bytes
+                        byteOffset += 1; 
+
+                        sample.values = [];
+                        if (numValuesInSample > MAX_CHANNELS) {
+                            console.error(`Received sample with num_channels (${numValuesInSample}) > MAX_CHANNELS (${MAX_CHANNELS})`);
+                            numValuesInSample = MAX_CHANNELS; // Prevent overflow
+                        }
+                        if (byteOffset + numValuesInSample * 2 > arrayBuffer.byteLength) {
+                             console.error("Buffer overflow detected while reading sample values.");
+                             break; // Stop parsing this buffer
+                        }
+                        for (let i = 0; i < numValuesInSample; i++) {
+                            sample.values.push(dataView.getInt16(byteOffset, littleEndian));
+                            byteOffset += 2;
+                        }
+                        // Skip remaining bytes in the values array if numValuesInSample < MAX_CHANNELS
+                        byteOffset += (MAX_CHANNELS - numValuesInSample) * 2;
+
+                        // Add alignment padding skip if needed, based on total struct size.
+                        // If total size is 12, and we've read 2(dt) + 1(num) + 1(pad) + 2*numVals,
+                        // the remaining is 8 - 2*numVals. We already skipped MAX-numVals * 2 = 8 - 2*numVals. So we are at the end.
+                        
+                        samples.push(sample);
+                    }
+
+                    if (samples.length > 0) {
+                        // Pass the parsed samples array to drawSignal
+                        // drawSignal will need modification to use this new format
+                        drawSignal(samples); 
+                    }
+                };
+                reader.readAsArrayBuffer(evt.data);
             }
           };
 
@@ -804,52 +891,8 @@
 
       var wordsPerSample = 1; // Default, will be updated by dummy message
 
-      function drawSignal (myInt16Array, startInd, endInd) { 
-        if (startInd > endInd) return;
-        // console.log ('drawSignal (' + startInd.toString () + ', ' + endInd.toString () + ')');
-
-        // find dummy sample (the one with value < 0) which will tells javascript client to start drawing from beginning of the screen
-        for (var ind = startInd; ind <= endInd; ind += wordsPerSample) {
-          if (myInt16Array [ind] < 0) { // if signal value < 0 this is a dummy value which also holds the information about how numbers are stored in the buffer
-            
-            // --- NEW Dummy Message Handling --- 
-            // We assume a new format: 
-            // Negative value: -100 - numActiveChannels for non-continuous sampling
-            //                 -200 - samplingTime (us) for continuous sampling (implies 1 channel)
-            const dummyValue = myInt16Array[ind];
-
-            if (dummyValue <= -100 && dummyValue > -200) {
-                 numActiveChannels = -dummyValue - 100;
-                 wordsPerSample = numActiveChannels + 1; // N signals + 1 deltaTime
-                 continuousSamplingTime = 0;
-                 console.log(`Dummy: ${numActiveChannels} channels detected.`);
-            } else if (dummyValue <= -200) {
-                 numActiveChannels = 1; // Continuous implies 1 channel for now
-                 wordsPerSample = 1; // 1 signal, no deltaTime
-                 continuousSamplingTime = -dummyValue - 200;
-                 screenTimeOffset = -continuousSamplingTime; // Reset screen offset
-                 console.log(`Dummy: Continuous sampling detected, time = ${continuousSamplingTime}us`);
-            } else {
-                 console.warn("Unknown dummy value received:", dummyValue);
-                 // Fallback or error handling? For now, assume old format?
-                 // Let's try to handle old format as fallback:
-                 switch (dummyValue) {
-                    case -2: numActiveChannels = 1; wordsPerSample = 2; continuousSamplingTime = 0; break;
-                    case -3: numActiveChannels = 2; wordsPerSample = 3; continuousSamplingTime = 0; break;
-                    default: console.error("Unhandled dummy value!"); return; // Stop drawing
-                 }
-            }
-            // Initialize lastJ array based on numActiveChannels
-            lastJ = new Array(numActiveChannels).fill(0);
-            // --- END NEW Dummy Message Handling ---
-
-            // console.log ('Got dummy sample at ' + ind.toString () + ' value: ' + myInt16Array [ind].toString ());
-            drawSignal (myInt16Array, startInd, ind - wordsPerSample); // to previuos sample
-            drawBackgroundAndCalculateParameters ();
-            drawSignal (myInt16Array, ind + wordsPerSample, endInd); // from next sample on
-            return;
-          }
-        }
+      function drawSignal (samples) { 
+        if (samples.length === 0) return;
 
         var canvas = document.getElementById ('oscilloscope');
         var ctx = canvas.getContext ('2d');
@@ -859,12 +902,13 @@
 
         ctx.lineWidth = 3;
 
-        for (var ind = startInd; ind <= endInd; ind += wordsPerSample) { 
+        for (var ind = 0; ind < samples.length; ind++) {
+          let sample = samples[ind];
 
           // calculate sample position (time)
           if (continuousSamplingTime == 0 && wordsPerSample > numActiveChannels) {
               // Check prevents error if wordsPerSample is 1 (continuous)
-              screenTimeOffset += myInt16Array [ind + numActiveChannels]; // deltaTime is the last value
+              screenTimeOffset += sample.values[numActiveChannels]; // deltaTime is the last value
           } else if (continuousSamplingTime > 0) {
               screenTimeOffset += continuousSamplingTime; // continouus sampling
           }
@@ -886,7 +930,7 @@
               }
 
               const isAnalogCh = (settings.type === 'analog');
-              let yValue = myInt16Array[ind + ch];
+              let yValue = sample.values[ch];
               let j; // Y coordinate on canvas
 
               if (isAnalogCh) {
@@ -946,7 +990,6 @@
           lastI = i;
           lastJ = currentJ; // Update last positions for all channels
         }
-
       }
 
       // eneable and disable controls
