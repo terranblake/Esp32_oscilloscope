@@ -885,110 +885,116 @@
       drawBackgroundAndCalculateParameters ();
 
       var lastI;  // last drawn sample (time)
-      var lastJ = []; // array for last Y values of active channels
-      var channelColors = ['#ffbf80', '#80bfff', '#80ff80', '#ff80ff']; // Example colors for 4 channels
-      var numActiveChannels = 0; // Will be set by the dummy message
-
+      var lastJ = []; // last drawn sample (value) - Now an array, one per active channel
+      var channelColors = ['red', 'aqua', 'lime', 'yellow']; // Colors for CH0, CH1, CH2, CH3
       var wordsPerSample = 1; // Default, will be updated by dummy message
 
       function drawSignal (samples) { 
-        if (samples.length === 0) return;
+        if (samples.length === 0 || !receivedChannelConfig || receivedChannelConfig.numActive === 0) {
+            console.log("drawSignal: No samples or config received yet.");
+            return; // Nothing to draw or no config yet
+        }
+
+        // Old dummy message finding logic removed.
+        // Config is now handled in ws.onmessage
 
         var canvas = document.getElementById ('oscilloscope');
         var ctx = canvas.getContext ('2d');
-
+        var i, j;     // pixel coordinates
         var lines = document.getElementById ('lines').checked;
         var markers = document.getElementById ('markers').checked;
 
-        ctx.lineWidth = 3;
-
-        for (var ind = 0; ind < samples.length; ind++) {
-          let sample = samples[ind];
-
-          // calculate sample position (time)
-          if (continuousSamplingTime == 0 && wordsPerSample > numActiveChannels) {
-              // Check prevents error if wordsPerSample is 1 (continuous)
-              screenTimeOffset += sample.values[numActiveChannels]; // deltaTime is the last value
-          } else if (continuousSamplingTime > 0) {
-              screenTimeOffset += continuousSamplingTime; // continouus sampling
+        if (restartDrawingSignal) { // restart drawing from the left
+          lastI = xOffset; // Start drawing from the left margin
+          lastJ = new Array(receivedChannelConfig.numActive).fill(0); // Initialize based on number of *active* channels
+          screenTimeOffset = 0;
+          restartDrawingSignal = false;
+          console.log(`drawSignal: Restarting draw. Active channels: ${receivedChannelConfig.numActive}`);
+        } else {
+          // make sure lastJ has the correct length if the number of active channels changed mid-stream (shouldn't happen ideally)
+          if (lastJ.length !== receivedChannelConfig.numActive) {
+              lastJ = new Array(receivedChannelConfig.numActive).fill(0);
           }
+        }
 
-          i = xOffset + xScale * screenTimeOffset;   // time coordinate
+        // Start drawing path for each active channel
+        let paths = [];
+        for (let ch = 0; ch < receivedChannelConfig.numActive; ch++) {
+            const originalChannelIndex = receivedChannelConfig.channelMap[ch];
+            paths[ch] = new Path2D();
+            paths[ch].moveTo(lastI, lastJ[ch]); // Start from last point
+        }
+
+        // Iterate through received samples
+        for (var sampleIndex = 0; sampleIndex < samples.length; sampleIndex++) {
+          let sample = samples[sampleIndex];
           
-          let currentJ = []; // Temporary array for current Y values
-          for(let ch = 0; ch < numActiveChannels; ch++) {
-              // Map data stream index (ch) to original channel index (0-3)
-              const originalChIndex = enabledChannelIndices[ch]; 
-              if (originalChIndex === undefined) {
-                  console.error(`Error: Could not find original index for data channel ${ch}`);
-                  continue; // Skip drawing this channel
-              }
-              const settings = activeChannelSettings[originalChIndex];
+          // --- Calculate Time / X coordinate --- 
+          // screenTimeOffset is continuously incremented
+          screenTimeOffset += sample.deltaTime;
+          i = xOffset + xScale * screenTimeOffset;
+
+          // Store current Y coordinates for this time step
+          let currentJ = new Array(receivedChannelConfig.numActive);
+
+          // --- Calculate Value / Y coordinate for each active channel --- 
+          for (let ch = 0; ch < receivedChannelConfig.numActive; ch++) {
+              const originalChannelIndex = receivedChannelConfig.channelMap[ch];
+              const settings = activeChannelSettings[originalChannelIndex]; // Get UI settings (sens, pos)
+              
               if (!settings) {
-                  console.error(`Error: Could not find settings for original channel ${originalChIndex}`);
-                  continue; // Skip drawing this channel
+                  console.error(`Missing settings for original channel index ${originalChannelIndex}`);
+                  currentJ[ch] = lastJ[ch]; // Keep last position on error
+                  continue; 
               }
 
-              const isAnalogCh = (settings.type === 'analog');
-              let yValue = sample.values[ch];
-              let j; // Y coordinate on canvas
+              const isAnalogCh = (receivedChannelConfig.typeMask >> originalChannelIndex) & 1;
+              let yValue = sample.values[ch]; // Value for this active channel
+              let chYOffset, chYScale;
 
               if (isAnalogCh) {
-                  // Calculate channel-specific scale and offset
-                  let channelYScale = -(canvas.height - 60) / 4096; // Base scale
-                  switch (settings.sensitivity) { // Apply sensitivity scaling
-                      case '0': /* channelYScale *= 1; */ break; // 100%
-                      case '1': channelYScale *= 2; break; // 200%
-                      case '2': channelYScale *= 4; break; // 400%
-                      case '3': channelYScale *= 8; break; // 800% (Adjusted from 1000% for powers of 2? Check original logic) - Assuming 800%
-                      case '4': channelYScale *= 10; break; // 1000% (Adjusted from 2000%?) - Assuming 1000%
-                      case '5': channelYScale *= 20; break; // 2000% (Adjusted from 4000%?) - Assuming 2000%
-                      // NOTE: The sensitivity values might need review based on the old vs new scale factors
-                  }
-                  let channelYOffset = canvas.height - 50 - parseInt(settings.position) * channelYScale;
-                  j = channelYOffset + channelYScale * yValue;
+                  // Apply sensitivity and position for analog channels
+                  const sensitivity = settings.sensitivity || 0; // Default to 0 if missing
+                  const position = settings.position || 0;     // Default to 0 if missing
+                  const sensitivityFactor = Math.pow(2, sensitivity);
+                  const range = 4096 / sensitivityFactor;
+                  const scaledValue = (yValue - (2048 - range / 2)) * sensitivityFactor;
+                  chYScale = globalYScale_Analog; // Use global analog scale
+                  chYOffset = globalYOffset_Analog + globalYScale_Analog * (position * (4096 / 255) - 2048); // Apply position offset
+                  j = chYOffset + chYScale * scaledValue;
+
               } else {
-                  // Use pre-calculated global digital scale/offset
-                  // Ensure digitalYOffset and digitalYScale are correctly set in drawBackgroundAndCalculateParameters
-                  if (digitalYOffset === undefined || digitalYScale === undefined) {
-                     console.warn("Digital scale/offset not calculated yet.");
-                     // Temporary fallback: map 0 to bottom, 1 to top-ish
-                     j = (yValue === 0) ? canvas.height - 50 : 50;
-                  } else {
-                     j = digitalYOffset + digitalYScale * yValue;
-                  }
+                  // Use fixed scale/offset for digital channels
+                  chYScale = digitalYScale;
+                  chYOffset = digitalYOffset; 
+                  // Position slider could potentially offset digital? Let's ignore position for digital now.
+                  j = chYOffset + chYScale * yValue; // yValue should be 0 or 1
               }
-              currentJ.push(j);
+              currentJ[ch] = j; // Store calculated Y coordinate
 
-              // Draw Lines
-              if (lines && !restartDrawingSignal && lastJ[ch] !== undefined) { // Add check for defined lastJ
-                  ctx.strokeStyle = channelColors[originalChIndex % channelColors.length]; // Use color based on original index
-                  ctx.beginPath();
-                  ctx.moveTo(lastI, lastJ[ch]);
-                  if (isAnalogCh) {
-                      ctx.lineTo(i, j);
-                  } else { // Digital
-                      ctx.lineTo(i, lastJ[ch]); // Horizontal line first
-                      ctx.lineTo(i, j);         // Then vertical line
-                  }
-                  ctx.stroke();
+              // Add point to this channel's path
+              if (lines) {
+                  paths[ch].lineTo(i, j);
               }
-
-              // Draw Markers
               if (markers) {
-                   ctx.strokeStyle = channelColors[originalChIndex % channelColors.length]; // Use color based on original index
-                   ctx.beginPath();
-                   ctx.arc(i, j, 2, 0, 2 * Math.PI, false);
-                   ctx.stroke();
+                  paths[ch].moveTo(i + 3, j); // Move slightly for marker
+                  paths[ch].arc(i, j, 3, 0, 2 * Math.PI); // Draw marker circle
+              }
+              // If only markers, ensure the next line starts from the correct place
+              if (!lines && markers) {
+                  paths[ch].moveTo(i, j);
               }
           }
-
-          if (restartDrawingSignal) {
-              restartDrawingSignal = false; // Set flag after processing first point
-          }
-
-          lastI = i;
           lastJ = currentJ; // Update last positions for all channels
+          lastI = i;        // Update last time coordinate
+        }
+
+        // --- Draw the paths for each channel --- 
+        ctx.lineWidth = 1; // Line width for signal traces
+        for (let ch = 0; ch < receivedChannelConfig.numActive; ch++) {
+            const originalChannelIndex = receivedChannelConfig.channelMap[ch];
+            ctx.strokeStyle = channelColors[originalChannelIndex] || 'white'; // Use original index for color
+            ctx.stroke(paths[ch]);
         }
       }
 
