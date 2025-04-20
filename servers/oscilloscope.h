@@ -1246,50 +1246,136 @@
     #endif
 
 
-    // oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender 
+    // oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender oscSender 
     
-    void oscSender (void *sharedMemory) {
-      unsigned char gpio1 =                   (unsigned char) ((oscSharedMemory *) sharedMemory)->gpio1; // easier to check validity with unsigned char then with integer 
-      unsigned char gpio2 =                   (unsigned char) ((oscSharedMemory *) sharedMemory)->gpio2; // easier to check validity with unsigned char then with integer
-      unsigned char noOfSignals = 1; if (gpio2 <= 39) noOfSignals = 2;  // monitor 1 or 2 signals
-      oscSamples *sendBuffer =                &((oscSharedMemory *) sharedMemory)->sendBuffer;
-      sendBuffer->samplesAreReady = false;     
-      bool clientIsBigEndian =                ((oscSharedMemory *) sharedMemory)->clientIsBigEndian;
-      WebSocket *webSocket =                  ((oscSharedMemory *) sharedMemory)->webSocket; 
-    
-      unsigned long lastMillis = millis ();
-      while (true) { 
-        delay (1);
-        // send samples to javascript client if they are ready
-        if (sendBuffer->samplesAreReady && sendBuffer->sampleCount) {
+    void oscSender (void *sharedMemoryPtr) {
+        oscSharedMemory *sharedMemory = (oscSharedMemory *) sharedMemoryPtr;
+        oscSamples *sendBuffer = &sharedMemory->sendBuffer;
+        bool clientIsBigEndian = sharedMemory->clientIsBigEndian;
+        WebSocket *webSocket = sharedMemory->webSocket;
 
-          // copy buffer with samples within critical section
-          oscSamples sendSamples = *sendBuffer;
-          sendBuffer->samplesAreReady = false; // oscRader will set this flag when buffer is the next time ready for sending
-          // swap bytes if javascript client is big endian
-          int sendBytes; // calculate the number of bytes in the buffer
+        // Remove old logic based on gpio1/gpio2
+        // unsigned char gpio1 =                   (unsigned char) ((oscSharedMemory *) sharedMemory)->gpio1; // easier to check validity with unsigned char then with integer
+        // unsigned char gpio2 =                   (unsigned char) ((oscSharedMemory *) sharedMemory)->gpio2; // easier to check validity with unsigned char then with integer
+        // unsigned char noOfSignals = 1; if (gpio2 <= 39) noOfSignals = 2;  // monitor 1 or 2 signals
 
-          // find out the type of buffer used
-          if (noOfSignals == 1) 
-              if (sendSamples.samplesI2sSignal [0].signal1 < -3) 
-                  sendBytes = sendSamples.sampleCount * sizeof (oscI2sSample);  // 1 I2S signal (I2S signal does not starts with -1, -2 or -3 dummy value)
-              else
-                  sendBytes = sendSamples.sampleCount * sizeof (osc1SignalSample); // 1 signal with deltaTime
-          else                  
-              sendBytes = sendSamples.sampleCount * sizeof (osc2SignalsSample); // 2 signals with deltaTime
-          int sendWords = sendBytes >> 1;                                 // number of 16 bit words = number of bytes / 2
+        sendBuffer->samplesAreReady = false;
 
-          if (clientIsBigEndian) {
-            uint16_t *w = (uint16_t *) &sendSamples;
-            for (size_t i = 0; i < sendWords; i ++) w [i] = htons (w [i]);
-          }
-          if (!webSocket->sendBinary ((byte *) &sendSamples,  sendBytes)) return;
+        __oscilloscope_h_debug__("oscSender started.");
+
+        unsigned long lastMillis = millis ();
+        while (true) {
+            // Check WebSocket status before attempting to send
+            if (!webSocket || webSocket->getReadyState() != WS_READY_STATE_OPEN) {
+                __oscilloscope_h_debug__("oscSender: WebSocket not open. Stopping sender.");
+                // Optionally signal reader to stop? Or just exit.
+                sharedMemory->oscReaderState = STOP; // Signal reader to stop
+                break; // Exit sender loop
+            }
+
+            delay (1); // Yield
+
+            // Send samples to javascript client if they are ready
+            if (sendBuffer->samplesAreReady && sendBuffer->sampleCount > 0) {
+                __oscilloscope_h_debug__("oscSender: sendBuffer is ready.");
+
+                // Copy buffer locally. Using memcpy might be slightly safer if reader modifies concurrently, though flags should prevent it.
+                oscSamples sendSamples;
+                memcpy(&sendSamples, sendBuffer, sizeof(oscSamples));
+                sendBuffer->samplesAreReady = false; // Mark buffer as available for reader immediately after copy
+
+                // Calculate the total size to send: number of samples * size of each multi-channel sample struct.
+                size_t sendBytes = sendSamples.sampleCount * sizeof(oscMultiChannelSample);
+                __oscilloscope_h_debug__(("oscSender: Sending " + String(sendSamples.sampleCount) + " samples (" + String(sendBytes) + " bytes).").c_str());
+
+
+                // Perform byte swapping IF necessary
+                if (clientIsBigEndian) {
+                     __oscilloscope_h_debug__("oscSender: Swapping bytes for big-endian client.");
+                    for (unsigned int i = 0; i < sendSamples.sampleCount; i++) {
+                        oscMultiChannelSample *sample = &sendSamples.samplesMultiChannel[i];
+                        // Swap delta_time (int16_t)
+                        sample->delta_time = __builtin_bswap16(sample->delta_time);
+                        // num_channels (uint8_t) does not need swapping
+                        // Swap values (int16_t array)
+                        for (uint8_t j = 0; j < sample->num_channels; j++) { // Only swap the actual number of channels used
+                            sample->values[j] = __builtin_bswap16(sample->values[j]);
+                        }
+                    }
+                }
+
+                // Send the binary data
+                // Use the pointer to the actual data within the copied structure
+                if (!webSocket->sendBinary((uint8_t *)sendSamples.samplesMultiChannel, sendBytes)) {
+                    __oscilloscope_h_debug__("oscSender: WebSocket sendBinary failed.");
+                    // Handle send failure - maybe close socket or break loop?
+                    sharedMemory->oscReaderState = STOP; // Signal reader to stop
+                    break; // Exit sender loop
+                }
+
+                 __oscilloscope_h_debug__("oscSender: Sent data successfully.");
+                 lastMillis = millis (); // Reset timeout watchdog
+
+            } else {
+                // Simple watchdog: if no samples sent for a while, maybe something is wrong?
+                if (millis () - lastMillis > 5000) { // 5 second watchdog
+                    __oscilloscope_h_debug__("oscSender: Watchdog timeout - no samples sent for 5s. Stopping.");
+                    sharedMemory->oscReaderState = STOP; // Signal reader to stop
+                    if (webSocket && webSocket->getReadyState() == WS_READY_STATE_OPEN) {
+                       webSocket->sendString("[Oscilloscope Error] No samples received from reader task.");
+                       // Consider closing socket? webSocket->closeWebSocket();
+                    }
+                    break; // Exit sender loop
+                }
+            }
+
+            // Check if the reader task has requested a stop
+            if (sharedMemory->oscReaderState == STOP || sharedMemory->oscReaderState == STOPPED) {
+                __oscilloscope_h_debug__("oscSender: Reader task stopped/stopping. Exiting sender.");
+                break;
+            }
+
+            // Removed old logic for checking buffer type and size based on dummy values
+            // // find out the type of buffer used
+            // if (noOfSignals == 1)
+            //     if (sendSamples.samplesI2sSignal [0].signal1 < -3)
+            //         sendBytes = sendSamples.sampleCount * sizeof (oscI2sSample);  // 1 I2S signal (I2S signal does not starts with -1, -2 or -3 dummy value)
+            //     else
+            //         sendBytes = sendSamples.sampleCount * sizeof (osc1SignalSample); // 1 signal
+            // else sendBytes = sendSamples.sampleCount * sizeof (osc2SignalsSample); // 2 signals
+            //
+            // // swap bytes if javascript client is big endian
+            // if (clientIsBigEndian) {
+            //     if (noOfSignals == 1)
+            //         if (sendSamples.samplesI2sSignal [0].signal1 < -3) {
+            //             for (int i = 0; i < sendSamples.sampleCount; i++) {
+            //                 sendSamples.samplesI2sSignal [i].signal1 = __builtin_bswap16 (sendSamples.samplesI2sSignal [i].signal1);
+            //             }
+            //         } else {
+            //             for (int i = 0; i < sendSamples.sampleCount; i++) {
+            //                 sendSamples.samples1Signal [i].signal1 = __builtin_bswap16 (sendSamples.samples1Signal [i].signal1);
+            //                 sendSamples.samples1Signal [i].deltaTime = __builtin_bswap16 (sendSamples.samples1Signal [i].deltaTime);
+            //             }
+            //         }
+            //     else
+            //         for (int i = 0; i < sendSamples.sampleCount; i++) {
+            //             sendSamples.samples2Signals [i].signal1 = __builtin_bswap16 (sendSamples.samples2Signals [i].signal1);
+            //             sendSamples.samples2Signals [i].signal2 = __builtin_bswap16 (sendSamples.samples2Signals [i].signal2);
+            //             sendSamples.samples2Signals [i].deltaTime = __builtin_bswap16 (sendSamples.samples2Signals [i].deltaTime);
+            //         }
+            // }
+            // webSocket->sendBinary ((uint8_t *) &sendSamples, sendBytes);
+            //
+            // lastMillis = millis ();
+            // __oscilloscope_h_debug__ ("oscSender: " + String (sendBytes) + " B sent");
         }
-    
-        // read (text) stop command form javscrip client if it arrives - according to oscilloscope protocol the string could only be 'stop' - so there is no need checking it
-        if (webSocket->available () != WebSocket::NOT_AVAILABLE) return; // this also covers ERROR and TIME_OUT
-        if (webSocket->getSocket () == -1) return; // if the socket has been closed by oscReader
-      }
+
+        __oscilloscope_h_debug__("oscSender stopped.");
+        // Do not delete task here, let the caller handle it if needed.
+        // Ensure reader is stopped if we exit due to error
+        if (sharedMemory->oscReaderState != STOPPED) {
+             sharedMemory->oscReaderState = STOP;
+        }
     }
 
     // main oscilloscope function - it reads request from javascript client then starts two threads: oscilloscope reader (that reads samples ans packs them into buffer) and oscilloscope sender (that sends buffer to javascript client)
