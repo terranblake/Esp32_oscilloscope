@@ -132,91 +132,143 @@
                     lists of GPIOs that should not be addressed in digital or analog manner.</div>
 
     <hr />
-    <div class='d1' style='height: 50px;'>
-      <div class='d2'>&nbsp;ESP32 GPIOs <small><small>(1, 2)</small></div>
-      <div class='d3' style='color: gray;'>
-        <select id='gpio1'>
-          <option value='0'>GPIO  0</option><option value='1'>GPIO  1</option><option value='2' selected='selected'>GPIO  2</option><option value='3'>GPIO  3</option><option value='4'>GPIO  4</option><option value='5'>GPIO  5</option>
-          <option value='12'>GPIO 12</option><option value='13'>GPIO 13</option><option value='14'>GPIO 14</option><option value='15'>GPIO 15</option><option value='16'>GPIO 16</option>
-          <option value='17'>GPIO 17</option><option value='18'>GPIO 18</option><option value='19'>GPIO 19</option><option value='21'>GPIO 21</option><option value='22'>GPIO 22</option>
-          <option value='23'>GPIO 23</option><option value='25'>GPIO 25</option><option value='26'>GPIO 26</option><option value='27'>GPIO 27</option><option value='32'>GPIO 32</option>
-          <option value='33'>GPIO 33</option><option value='34'>GPIO 34</option><option value='35'>GPIO 35</option><option value='36'>GPIO 36</option><option value='39'>GPIO 39</option>
-        </select>
-      </div>
-      <div class='d3' style='color: gray;'>
-        <select id='gpio2'>
-                <option value='255' selected='selected'></option>
-          <option value='0'>GPIO  0</option><option value='1'>GPIO  1</option><option value='2'>GPIO  2</option><option value='3'>GPIO  3</option><option value='4'>GPIO  4</option><option value='5'>GPIO  5</option>
-          <option value='12'>GPIO 12</option><option value='13'>GPIO 13</option><option value='14'>GPIO 14</option><option value='15'>GPIO 15</option><option value='16'>GPIO 16</option>
-          <option value='17'>GPIO 17</option><option value='18'>GPIO 18</option><option value='19'>GPIO 19</option><option value='21'>GPIO 21</option><option value='22'>GPIO 22</option>
-          <option value='23'>GPIO 23</option><option value='25'>GPIO 25</option><option value='26'>GPIO 26</option><option value='27'>GPIO 27</option><option value='32'>GPIO 32</option>
-          <option value='33'>GPIO 33</option><option value='34'>GPIO 34</option><option value='35'>GPIO 35</option><option value='36'>GPIO 36</option><option value='39'>GPIO 39</option>
-        </select>
-      </div>
+    <!-- Start Channel Configuration Section -->
+    <div id="channelConfigSection">
+        <!-- Channel 0 Configuration -->
+        <div class='d1 channel-config-row' id="channelConfig0">
+            <div style="width: 10%; float: left;"> <!-- Enable/Label -->
+                <label class='switch'><input type='checkbox' id='ch0_enable' checked onchange="toggleChannelControls(0)"><div class='slider round'></div></label> Ch 0
+            </div>
+            <div style="width: 15%; float: left;"> <!-- GPIO -->
+                <select id='ch0_gpio'>
+                    <option value='0'>GPIO 0</option><option value='1'>GPIO 1</option><option value='2' selected='selected'>GPIO 2</option><option value='3'>GPIO 3</option><option value='4'>GPIO 4</option><option value='5'>GPIO 5</option>
+                    <option value='12'>GPIO 12</option><option value='13'>GPIO 13</option><option value='14'>GPIO 14</option><option value='15'>GPIO 15</option><option value='16'>GPIO 16</option>
+                    <option value='17'>GPIO 17</option><option value='18'>GPIO 18</option><option value='19'>GPIO 19</option><option value='21'>GPIO 21</option><option value='22'>GPIO 22</option>
+                    <option value='23'>GPIO 23</option><option value='25'>GPIO 25</option><option value='26'>GPIO 26</option><option value='27'>GPIO 27</option><option value='32'>GPIO 32</option>
+                    <option value='33'>GPIO 33</option><option value='34'>GPIO 34</option><option value='35'>GPIO 35</option><option value='36'>GPIO 36</option><option value='39'>GPIO 39</option>
+                </select>
+            </div>
+            <div style="width: 30%; float: left; font-size: 14px;"> <!-- Type Radio -->
+                <label><input type='radio' name='ch0_type' value='analog' id='ch0_analog' checked onchange="toggleAnalogControls(0)"> Analog</label>
+                <label><input type='radio' name='ch0_type' value='digital' id='ch0_digital' onchange="toggleAnalogControls(0)"> Digital</label>
+            </div>
+            <div style="width: 45%; float: left;"> <!-- Sensitivity/Position (Initially only for Analog) -->
+                <span id="ch0_analog_controls">
+                  <label for="ch0_sensitivity" style="font-size: 12px;">Sens:</label>
+                  <input id='ch0_sensitivity' type='range' min='0' max='5' value='0' step='1' style="width: 40%; height: 15px;" onchange="updateSensitivityLabel(0)">
+                  <span id="ch0_sensitivityLabel" style="font-size: 12px;">100%</span>
+                  &nbsp;
+                  <label for="ch0_position" style="font-size: 12px;">Pos:</label>
+                  <input id='ch0_position' type='range' min='0' max='4000' value='2000' step='100' style="width: 40%; height: 15px;" onchange="updatePositionLabel(0)">
+                  <span id="ch0_positionLabel" style="font-size: 12px;">2000</span>
+                </span>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+        <!-- Channel 1 Configuration -->
+        <div class='d1 channel-config-row' id="channelConfig1">
+             <div style="width: 10%; float: left;"> <!-- Enable/Label -->
+                <label class='switch'><input type='checkbox' id='ch1_enable' onchange="toggleChannelControls(1)"><div class='slider round'></div></label> Ch 1
+            </div>
+            <div style="width: 15%; float: left;"> <!-- GPIO -->
+                <select id='ch1_gpio' disabled>
+                    <option value='0'>GPIO 0</option><option value='1'>GPIO 1</option><option value='2'>GPIO 2</option><option value='3'>GPIO 3</option><option value='4'>GPIO 4</option><option value='5'>GPIO 5</option>
+                    <option value='12'>GPIO 12</option><option value='13' selected='selected'>GPIO 13</option><option value='14'>GPIO 14</option><option value='15'>GPIO 15</option><option value='16'>GPIO 16</option>
+                    <option value='17'>GPIO 17</option><option value='18'>GPIO 18</option><option value='19'>GPIO 19</option><option value='21'>GPIO 21</option><option value='22'>GPIO 22</option>
+                    <option value='23'>GPIO 23</option><option value='25'>GPIO 25</option><option value='26'>GPIO 26</option><option value='27'>GPIO 27</option><option value='32'>GPIO 32</option>
+                    <option value='33'>GPIO 33</option><option value='34'>GPIO 34</option><option value='35'>GPIO 35</option><option value='36'>GPIO 36</option><option value='39'>GPIO 39</option>
+                </select>
+            </div>
+            <div style="width: 30%; float: left; font-size: 14px;"> <!-- Type Radio -->
+                <label><input type='radio' name='ch1_type' value='analog' id='ch1_analog' disabled onchange="toggleAnalogControls(1)"> Analog</label>
+                <label><input type='radio' name='ch1_type' value='digital' id='ch1_digital' checked disabled onchange="toggleAnalogControls(1)"> Digital</label>
+            </div>
+            <div style="width: 45%; float: left;"> <!-- Sensitivity/Position (Initially only for Analog) -->
+                <span id="ch1_analog_controls" style="display: none;">
+                   <label for="ch1_sensitivity" style="font-size: 12px;">Sens:</label>
+                   <input id='ch1_sensitivity' type='range' min='0' max='5' value='0' step='1' style="width: 40%; height: 15px;" disabled onchange="updateSensitivityLabel(1)">
+                   <span id="ch1_sensitivityLabel" style="font-size: 12px;">100%</span>
+                   &nbsp;
+                   <label for="ch1_position" style="font-size: 12px;">Pos:</label>
+                   <input id='ch1_position' type='range' min='0' max='4000' value='2000' step='100' style="width: 40%; height: 15px;" disabled onchange="updatePositionLabel(1)">
+                   <span id="ch1_positionLabel" style="font-size: 12px;">2000</span>
+                 </span>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+        <!-- Channel 2 Configuration -->
+        <div class='d1 channel-config-row' id="channelConfig2">
+             <div style="width: 10%; float: left;"> <!-- Enable/Label -->
+                <label class='switch'><input type='checkbox' id='ch2_enable' onchange="toggleChannelControls(2)"><div class='slider round'></div></label> Ch 2
+            </div>
+            <div style="width: 15%; float: left;"> <!-- GPIO -->
+                <select id='ch2_gpio' disabled>
+                    <option value='0'>GPIO 0</option><option value='1'>GPIO 1</option><option value='2'>GPIO 2</option><option value='3'>GPIO 3</option><option value='4'>GPIO 4</option><option value='5'>GPIO 5</option>
+                    <option value='12'>GPIO 12</option><option value='13'>GPIO 13</option><option value='14'>GPIO 14</option><option value='15'>GPIO 15</option><option value='16'>GPIO 16</option>
+                    <option value='17'>GPIO 17</option><option value='18'>GPIO 18</option><option value='19'>GPIO 19</option><option value='21'>GPIO 21</option><option value='22'>GPIO 22</option>
+                    <option value='23'>GPIO 23</option><option value='25'>GPIO 25</option><option value='26'>GPIO 26</option><option value='27'>GPIO 27</option><option value='32'>GPIO 32</option>
+                    <option value='33'>GPIO 33</option><option value='34' selected='selected'>GPIO 34</option><option value='35'>GPIO 35</option><option value='36'>GPIO 36</option><option value='39'>GPIO 39</option>
+                </select>
+            </div>
+            <div style="width: 30%; float: left; font-size: 14px;"> <!-- Type Radio -->
+                <label><input type='radio' name='ch2_type' value='analog' id='ch2_analog' checked disabled onchange="toggleAnalogControls(2)"> Analog</label>
+                <label><input type='radio' name='ch2_type' value='digital' id='ch2_digital' disabled onchange="toggleAnalogControls(2)"> Digital</label>
+            </div>
+             <div style="width: 45%; float: left;"> <!-- Sensitivity/Position (Initially only for Analog) -->
+                <span id="ch2_analog_controls">
+                   <label for="ch2_sensitivity" style="font-size: 12px;">Sens:</label>
+                   <input id='ch2_sensitivity' type='range' min='0' max='5' value='0' step='1' style="width: 40%; height: 15px;" disabled onchange="updateSensitivityLabel(2)">
+                   <span id="ch2_sensitivityLabel" style="font-size: 12px;">100%</span>
+                   &nbsp;
+                   <label for="ch2_position" style="font-size: 12px;">Pos:</label>
+                   <input id='ch2_position' type='range' min='0' max='4000' value='2000' step='100' style="width: 40%; height: 15px;" disabled onchange="updatePositionLabel(2)">
+                   <span id="ch2_positionLabel" style="font-size: 12px;">2000</span>
+                 </span>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+        <!-- Channel 3 Configuration -->
+        <div class='d1 channel-config-row' id="channelConfig3">
+             <div style="width: 10%; float: left;"> <!-- Enable/Label -->
+                <label class='switch'><input type='checkbox' id='ch3_enable' onchange="toggleChannelControls(3)"><div class='slider round'></div></label> Ch 3
+            </div>
+            <div style="width: 15%; float: left;"> <!-- GPIO -->
+                <select id='ch3_gpio' disabled>
+                    <option value='0'>GPIO 0</option><option value='1'>GPIO 1</option><option value='2'>GPIO 2</option><option value='3'>GPIO 3</option><option value='4'>GPIO 4</option><option value='5'>GPIO 5</option>
+                    <option value='12'>GPIO 12</option><option value='13'>GPIO 13</option><option value='14'>GPIO 14</option><option value='15'>GPIO 15</option><option value='16'>GPIO 16</option>
+                    <option value='17'>GPIO 17</option><option value='18'>GPIO 18</option><option value='19'>GPIO 19</option><option value='21'>GPIO 21</option><option value='22'>GPIO 22</option>
+                    <option value='23'>GPIO 23</option><option value='25'>GPIO 25</option><option value='26'>GPIO 26</option><option value='27'>GPIO 27</option><option value='32'>GPIO 32</option>
+                    <option value='33'>GPIO 33</option><option value='34'>GPIO 34</option><option value='35' selected='selected'>GPIO 35</option><option value='36'>GPIO 36</option><option value='39'>GPIO 39</option>
+                </select>
+            </div>
+            <div style="width: 30%; float: left; font-size: 14px;"> <!-- Type Radio -->
+                <label><input type='radio' name='ch3_type' value='analog' id='ch3_analog' checked disabled onchange="toggleAnalogControls(3)"> Analog</label>
+                <label><input type='radio' name='ch3_type' value='digital' id='ch3_digital' disabled onchange="toggleAnalogControls(3)"> Digital</label>
+            </div>
+             <div style="width: 45%; float: left;"> <!-- Sensitivity/Position (Initially only for Analog) -->
+                <span id="ch3_analog_controls">
+                   <label for="ch3_sensitivity" style="font-size: 12px;">Sens:</label>
+                   <input id='ch3_sensitivity' type='range' min='0' max='5' value='0' step='1' style="width: 40%; height: 15px;" disabled onchange="updateSensitivityLabel(3)">
+                   <span id="ch3_sensitivityLabel" style="font-size: 12px;">100%</span>
+                   &nbsp;
+                   <label for="ch3_position" style="font-size: 12px;">Pos:</label>
+                   <input id='ch3_position' type='range' min='0' max='4000' value='2000' step='100' style="width: 40%; height: 15px;" disabled onchange="updatePositionLabel(3)">
+                   <span id="ch3_positionLabel" style="font-size: 12px;">2000</span>
+                 </span>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
     </div>
+    <!-- End Channel Configuration Section -->
 
     <hr />
-    <div class='d1'>
-      <div class='d2'>&nbsp;digitalRead (GPIO)</div>
-      <div class='d3'>
-        <label class='container'>&nbsp;<input type='radio' checked='checked' name='radio1' id='digital' onchange="
-          drawBackgroundAndCalculateParameters ();
-          document.getElementById ('sensitivity').disabled = true;
-          document.getElementById ('sensitivityLabel').style.color = 'gray';
-          document.getElementById ('position').disabled = true;
-          document.getElementById ('positionLabel').style.color = 'gray';
-          document.getElementById ('posTreshold').disabled = true;
-          document.getElementById ('posTriggerLabel').style.color = 'gray';
-          document.getElementById ('negTreshold').disabled = true;
-          document.getElementById ('negTriggerLabel').style.color = 'gray';
-        "><span class='checkmark'></span></label>
-      </div>
+    <div class='d1'> <!-- Renamed from vSens -->
+        <div class='d2'>&nbsp;Trigger (Channel 0 Analog)</div>
     </div>
-    <div class='d1'>
-      <div class='d2'>&nbsp;analogRead (GPIO)</div>
-      <div class='d3'>
-        <label class='container'>&nbsp;<input type='radio' name='radio1' id='analog' onchange="
-          drawBackgroundAndCalculateParameters ();
-          document.getElementById ('sensitivity').disabled = false;
-          document.getElementById ('sensitivityLabel').style.color = 'black';
-          document.getElementById ('position').disabled = false;
-          document.getElementById ('positionLabel').style.color = 'black';
-          document.getElementById ('posTreshold').disabled = false;
-          document.getElementById ('posTriggerLabel').style.color = 'black';
-          document.getElementById ('negTreshold').disabled = false;
-          document.getElementById ('negTriggerLabel').style.color = 'black';
-        "><span class='checkmark'></span></label>
-      </div>
-    </div>
-
-    <hr />
-    <div class='d1' id='vSens'>
-      <div class='d2'>&nbsp;Vertical sensitivity</div>
-      <div class='d3' id='sensitivityLabel'>100 %</div>
-      <div class='d5'> 
-        <input id='sensitivity' type='range' min='0' max='5' value='0' step='1' disabled onchange="
-          document.getElementById ('sensitivityLabel').textContent = sensitivityLabelFromSensitivitySlider (this.value);
-          drawBackgroundAndCalculateParameters ();
-        " />
-      </div>
-    </div>
-
-    <div class='d1' id='vPos'>
-      <div class='d2'>&nbsp;Vertical position</div>
-      <div class='d3' id='positionLabel'>0</div>
-      <div class='d5'>
-        <input id='position' type='range' min='0' max='4000' value='0' step='100' disabled onchange="
-          document.getElementById ('positionLabel').textContent = this.value;
-          drawBackgroundAndCalculateParameters ();
-        " />
-      </div>
-    </div>
-
-    <hr />
-    <div class='d1'>
+     <div class='d1'>
       <div class='d2'>&nbsp;Trigger on ↗ slope <small><small>(1)</small></small></div>
       <div class='d3'>
-        <label class='switch'><input type='checkbox' id='posTrigger'><div class='slider round'></div></label>
+        <label class='switch'><input type='checkbox' id='posTrigger' onchange="toggleTriggerControls(0)"><div class='slider round'></div></label>
       </div>
       <div class='d3' id='posTriggerLabel'>on 1000</div>
       <div class='d5'> 
@@ -229,7 +281,7 @@
     <div class='d1'>
       <div class='d2'>&nbsp;Trigger on ↘ slope <small><small>(1)</small></small></div>
       <div class='d3'>
-        <label class='switch'><input type='checkbox' id='negTrigger'><div class='slider round'></div></label>
+        <label class='switch'><input type='checkbox' id='negTrigger' onchange="toggleTriggerControls(0)"><div class='slider round'></div></label>
       </div>
       <div class='d3' id='negTriggerLabel'>on 3000</div>
       <div class='d5'> 
@@ -287,21 +339,45 @@
       <div class='d2'>&nbsp;</div>
       <div class='d3'><button class='button button2' id='startButton' onclick="
 
-        if (document.getElementById ('analog').checked && (',' + invalidAnalogInputs + ',').indexOf (',' + document.getElementById ('gpio1').value + ',') != -1) { 
-					alert ('Cannot analogRead GPIO ' + document.getElementById ('gpio1').value + '.'); 
-				} else if (document.getElementById ('analog').checked && document.getElementById ('gpio2').value != '255' && (',' + invalidAnalogInputs + ',').indexOf (',' + document.getElementById ('gpio2').value + ',') != -1) { 
-					alert ('Cannot analogRead GPIO ' + document.getElementById ('gpio2').value + '.'); 
-				} else if (document.getElementById ('digital').checked && (',' + invalidDigitalInputs + ',').indexOf (',' + document.getElementById ('gpio1').value + ',') != -1) {
-					alert ('Cannot digitalRead GPIO ' + document.getElementById ('gpio1').value + '.'); 
-				} else if (document.getElementById ('digital').checked && document.getElementById ('gpio2').value != '255' && (',' + invalidDigitalInputs + ',').indexOf (',' + document.getElementById ('gpio2').value + ',') != -1) { 
-					alert ('Cannot digitalRead GPIO ' + document.getElementById ('gpio2').value + '.'); 
-				} else {
+        let validationPassed = true;
+        let enabledCount = 0;
+        let errorMessage = '';
+        let firstInvalidChannel = -1;
 
+        for (let i = 0; i < MAX_CHANNELS; i++) {
+            if (document.getElementById(`ch${i}_enable`).checked) {
+                enabledCount++;
+                const isAnalog = document.getElementById(`ch${i}_analog`).checked;
+                const gpioValue = document.getElementById(`ch${i}_gpio`).value;
+                const invalidList = isAnalog ? invalidAnalogInputs : invalidDigitalInputs;
+                const mode = isAnalog ? 'analogRead' : 'digitalRead';
+
+                if ((',' + invalidList + ',').indexOf(',' + gpioValue + ',') != -1) {
+                    validationPassed = false;
+                    errorMessage = `Cannot ${mode} GPIO ${gpioValue} on Channel ${i}.`;
+                    firstInvalidChannel = i;
+                    break; // Stop checking after first error
+                }
+            }
+        }
+
+        if (enabledCount === 0) {
+            validationPassed = false;
+            errorMessage = 'Please enable at least one channel before starting.';
+        }
+
+        if (!validationPassed) {
+           alert (errorMessage);
+           // Optional: Focus on the invalid element if applicable
+           if (firstInvalidChannel !== -1) {
+              const invalidElement = document.getElementById(`ch${firstInvalidChannel}_gpio`);
+              if (invalidElement) invalidElement.focus();
+           }
+        } else {
            saveSettings ();
            drawBackgroundAndCalculateParameters ();
            enableDisableControls (true);
            startOscilloscope ();
-
         }
 
       ">&nbsp;START&nbsp;</button></div>
@@ -318,16 +394,19 @@
     <script type='text/javascript'>
 
       var lastWidth = 0;
-		  var currentWidth = document.documentElement.clientWidth; 
+		  var currentWidth = document.documentElement.clientWidth || document.body.clientWidth;
 		  window.addEventListener ('resize', (e) => {         
-				currentWidth = document.documentElement.clientWidth;
+				currentWidth = document.documentElement.clientWidth || document.body.clientWidth;
 				// if oscilloscope is not running we can resize and redraw canvas right now
 				if (document.getElementById ('stopButton').disabled == true) drawBackgroundAndCalculateParameters ();
 			});
 			// correct canvas size
 			function resizeCanvas () {
 				if (lastWidth != currentWidth) {
-					document.getElementById ('oscilloscope').width = document.getElementById ('vSens').clientWidth;
+					// Set canvas width to a percentage of the viewport or a container, minus some margin
+                    // Example: Use 90% of the available width
+                    let availableWidth = document.documentElement.clientWidth || document.body.clientWidth;
+                    document.getElementById ('oscilloscope').width = Math.max(300, availableWidth * 0.9); // Min width 300px
 					lastWidth = currentWidth;
 				}
 			}
@@ -369,11 +448,7 @@
       // console.log (document.cookie);
 
       var v;
-      v = getCookie ('gpio1'); if (v != '') document.getElementById ('gpio1').value = v;
-      v = getCookie ('gpio2'); if (v != '') document.getElementById ('gpio2').value = v;
-      v = getCookie ('analog'); if (v == 'true') document.getElementById ('analog').checked = true; else document.getElementById ('digital').checked = true;
-      v = getCookie ('sensitivity'); if (v != '') { document.getElementById ('sensitivity').value = v; document.getElementById ('sensitivityLabel').textContent = sensitivityLabelFromSensitivitySlider (v); }
-      v = getCookie ('position'); if (v != '') { document.getElementById ('position').value = v; document.getElementById ('positionLabel').textContent = v;}
+      // Load global settings
       v = getCookie ('posTrigger'); if (v == 'true') document.getElementById ('posTrigger').checked = true;
       v = getCookie ('posTreshold'); if (v != '') { document.getElementById ('posTreshold').value = v; document.getElementById ('posTriggerLabel').textContent = 'on ' + v; }
       v = getCookie ('negTrigger'); if (v == 'true') document.getElementById ('negTrigger').checked = true;
@@ -382,33 +457,56 @@
       v = getCookie ('lines'); if (v == 'false') document.getElementById ('lines').checked = false;
       v = getCookie ('markers'); if (v == 'false') document.getElementById ('markers').checked = false;
       v = getCookie ('remember'); if (v == 'true') document.getElementById ('remember').checked = true;
+      
+      // Load channel-specific settings
+      for (let i=0; i < MAX_CHANNELS; i++) {
+          v = getCookie(`ch${i}_enable`); 
+          // Important: Only set checked if cookie explicitly says 'true', default to disabled (false) otherwise
+          const enabled = (v === 'true');
+          document.getElementById(`ch${i}_enable`).checked = enabled;
 
-      enableDisableControls (false);
+          v = getCookie(`ch${i}_gpio`); if (v != '') document.getElementById(`ch${i}_gpio`).value = v;
+          v = getCookie(`ch${i}_type`); 
+          if (v === 'digital') {
+              document.getElementById(`ch${i}_digital`).checked = true;
+          } else {
+              document.getElementById(`ch${i}_analog`).checked = true; // Default to analog if not specified or invalid
+          }
+          v = getCookie(`ch${i}_sensitivity`); if (v != '') { document.getElementById(`ch${i}_sensitivity`).value = v; updateSensitivityLabel(i); }
+          v = getCookie(`ch${i}_position`); if (v != '') { document.getElementById(`ch${i}_position`).value = v; updatePositionLabel(i); }
+          
+          // Initial UI state update based on loaded enable/type
+          toggleChannelControls(i); // This calls toggleAnalogControls and toggleTriggerControls internally if i === 0
+      }
+
+      // enableDisableControls (false); // This is now handled by the loop above calling toggleChannelControls
 
       // save settings into cookies
       function saveSettings () {
         if (document.getElementById ('remember').checked) {
-          // set cookies for 10 years
-          setCookie ('gpio1', document.getElementById ('gpio1').value, 3652);
-          setCookie ('gpio2', document.getElementById ('gpio2').value, 3652);
-          setCookie ('analog', document.getElementById ('analog').checked, 3652);
-          setCookie ('sensitivity', document.getElementById ('sensitivity').value, 3652);
-          setCookie ('position', document.getElementById ('position').value, 3652);
-          setCookie ('posTrigger', document.getElementById ('posTrigger').checked, 3652);
-          setCookie ('posTreshold', document.getElementById ('posTreshold').value, 3652);
-          setCookie ('negTrigger', document.getElementById ('negTrigger').checked, 3652);
-          setCookie ('negTreshold', document.getElementById ('negTreshold').value, 3652);
-          setCookie ('frequency', document.getElementById ('frequency').value, 3652);
-          setCookie ('lines', document.getElementById ('lines').checked, 3652);
-          setCookie ('markers', document.getElementById ('markers').checked, 3652);
-          setCookie ('remember', document.getElementById ('remember').checked, 3652);
+          const expiryDays = 3652; // ~10 years
+          // Save global settings
+          setCookie ('posTrigger', document.getElementById ('posTrigger').checked, expiryDays);
+          setCookie ('posTreshold', document.getElementById ('posTreshold').value, expiryDays);
+          setCookie ('negTrigger', document.getElementById ('negTrigger').checked, expiryDays);
+          setCookie ('negTreshold', document.getElementById ('negTreshold').value, expiryDays);
+          setCookie ('frequency', document.getElementById ('frequency').value, expiryDays);
+          setCookie ('lines', document.getElementById ('lines').checked, expiryDays);
+          setCookie ('markers', document.getElementById ('markers').checked, expiryDays);
+          setCookie ('remember', document.getElementById ('remember').checked, expiryDays);
+
+          // Save channel-specific settings
+          for (let i=0; i < MAX_CHANNELS; i++) {
+             setCookie(`ch${i}_enable`, document.getElementById(`ch${i}_enable`).checked, expiryDays);
+             setCookie(`ch${i}_gpio`, document.getElementById(`ch${i}_gpio`).value, expiryDays);
+             const type = document.getElementById(`ch${i}_analog`).checked ? 'analog' : 'digital';
+             setCookie(`ch${i}_type`, type, expiryDays);
+             setCookie(`ch${i}_sensitivity`, document.getElementById(`ch${i}_sensitivity`).value, expiryDays);
+             setCookie(`ch${i}_position`, document.getElementById(`ch${i}_position`).value, expiryDays);
+          }
+
         } else {
-          // delete cookies
-          setCookie ('gpio1', '', -1);
-          setCookie ('gpio2', '', -1);
-          setCookie ('analog', '', -1);
-          setCookie ('sensitivity', '', -1);
-          setCookie ('position', '', -1);
+          // delete global cookies
           setCookie ('posTrigger', '', -1);
           setCookie ('posTreshold', '', -1);
           setCookie ('negTrigger', '', -1);
@@ -417,10 +515,20 @@
           setCookie ('lines', '', -1);
           setCookie ('markers', '', -1);
           setCookie ('remember', '', -1);
+          // delete channel-specific cookies
+          for (let i=0; i < MAX_CHANNELS; i++) {
+              setCookie(`ch${i}_enable`, '', -1);
+              setCookie(`ch${i}_gpio`, '', -1);
+              setCookie(`ch${i}_type`, '', -1);
+              setCookie(`ch${i}_sensitivity`, '', -1);
+              setCookie(`ch${i}_position`, '', -1);
+          }
         }
       }
 
       var webSocket = null;
+      var activeChannelSettings = {}; // Store settings of active channels
+      var enabledChannelIndices = []; // Store the original indices of enabled channels
 
       function stopOscilloscope () {
         if (webSocket != null) {
@@ -432,6 +540,8 @@
 
       function startOscilloscope () {
         stopOscilloscope ();
+        activeChannelSettings = {}; // Clear previous settings
+        enabledChannelIndices = []; // Clear previous indices
 
          if ('WebSocket' in window) {
           // open a web socket
@@ -443,87 +553,81 @@
 						endianArray = new Uint16Array (1); endianArray [0] = 0xAABB;
 						ws.send (endianArray);
 
-						// then send start command with sampling parameters
-						var startCommand = 'start ' + (document.getElementById ('analog').checked ? 'analog' : 'digital') + ' sampling on GPIO ' + document.getElementById ('gpio1').value + (document.getElementById ('gpio2').value == 255 ? '' : ', ' + document.getElementById ('gpio2').value) + ' every ';
-						switch (document.getElementById ('frequency').value) {
+            // --- Build new query string --- 
+            let params = [];
 
-							// real sampling times will be passed back to browser in 16 bit integers - take care that values are <= 2^15 ( = 32767) but it is better to keep it below 5000 to be on the safe side !
+            // Global settings (Frequency -> SamplingTime/Unit, ScreenWidthTime/Unit)
+            let samplingTime = 0;
+            let samplingTimeUnit = 'us';
+            let screenWidthTime = 0;
+            let screenWidthTimeUnit = 'us';
+            const freqValue = document.getElementById('frequency').value;
+            // (Replicate the switch logic from the old code to get times/units)
+            switch (freqValue) {
+                case '1':  samplingTime = 27; samplingTimeUnit = 'ms'; screenWidthTime = 10000; screenWidthTimeUnit = 'ms'; break;
+                case '2':  samplingTime = 21; samplingTimeUnit = 'ms'; screenWidthTime = 5000; screenWidthTimeUnit = 'ms'; break;
+                case '3':  samplingTime = 6;  samplingTimeUnit = 'ms'; screenWidthTime = 2000; screenWidthTimeUnit = 'ms'; break;
+                case '4':  samplingTime = 2500; samplingTimeUnit = 'us'; screenWidthTime = 1000000; screenWidthTimeUnit = 'us'; break;
+                case '5':  samplingTime = 1250; samplingTimeUnit = 'us'; screenWidthTime = 500000; screenWidthTimeUnit = 'us'; break;
+                case '6':  samplingTime = 500; samplingTimeUnit = 'us'; screenWidthTime = 200000; screenWidthTimeUnit = 'us'; break;
+                case '7':  samplingTime = 250; samplingTimeUnit = 'us'; screenWidthTime = 100000; screenWidthTimeUnit = 'us'; break;
+                case '8':  samplingTime = 125; samplingTimeUnit = 'us'; screenWidthTime = 50000; screenWidthTimeUnit = 'us'; break;
+                case '9':  samplingTime = 50; samplingTimeUnit = 'us'; screenWidthTime = 20000; screenWidthTimeUnit = 'us'; break;
+                case '10': samplingTime = 43; samplingTimeUnit = 'us'; screenWidthTime = 16667; screenWidthTimeUnit = 'us'; break;
+                case '11': samplingTime = 25; samplingTimeUnit = 'us'; screenWidthTime = 10000; screenWidthTimeUnit = 'us'; break;
+                case '12': samplingTime = 13; samplingTimeUnit = 'us'; screenWidthTime = 5000; screenWidthTimeUnit = 'us'; break;
+                case '13': samplingTime = 7;  samplingTimeUnit = 'us'; screenWidthTime = 2000; screenWidthTimeUnit = 'us'; break;
+                case '14': samplingTime = 3;  samplingTimeUnit = 'us'; screenWidthTime = 1000; screenWidthTimeUnit = 'us'; break;
+                case '15': samplingTime = 2;  samplingTimeUnit = 'us'; screenWidthTime = 500; screenWidthTimeUnit = 'us'; break;
+                case '16': samplingTime = 1;  samplingTimeUnit = 'us'; screenWidthTime = 200; screenWidthTimeUnit = 'us'; break;
+                case '17': samplingTime = 1;  samplingTimeUnit = 'us'; screenWidthTime = 100; screenWidthTimeUnit = 'us'; break;
+            }
+            params.push(`st=${samplingTime}`);
+            params.push(`stu=${samplingTimeUnit}`);
+            params.push(`swt=${screenWidthTime}`);
+            params.push(`swtu=${screenWidthTimeUnit}`);
 
-							// please note that oscilloscope reader can put in the output buffer  max 746 - 1 (continuous analog signal) samples per screen,
-              //                                                                    max 373 - 1 (1 signal) samples per screen,
-              //                                                                    max 248 - 1 (2 signals) samples per screen
-							// but the number may be significantly lower if ESP32 can not keep up to required sampling rate
-              // for orientation, oscilloscope can make 1 (1 signal) digital sample roughly every 1.6 us,
-              //                                        1 (2 signals) digital sample roughly every 2.5 us,
-              //                                        1 (1 signal) analog sample roughly every 70 us,
-              //                                        1 (2 signals) analog sample roughly every 150 us,
-              //                                        max continuous analog sampling (1 signal only) frequency = 150 kHz (1 signal every 6,6 us)
+            // Channel settings
+            for (let i = 0; i < MAX_CHANNELS; i++) {
+                if (document.getElementById(`ch${i}_enable`).checked) {
+                    enabledChannelIndices.push(i); // Store the index of the enabled channel
+                    const type = document.getElementById(`ch${i}_analog`).checked ? 'analog' : 'digital';
+                    const gpio = document.getElementById(`ch${i}_gpio`).value;
+                    let chParam = `ch${i}=${type},${gpio}`;
+                    let settings = { type: type, gpio: gpio }; // Basic settings
 
-							// 1 sample at a time mode, measurements in ms, actual sampling rate may be lower than specified
+                    if (type === 'analog') {
+                        const sensitivity = document.getElementById(`ch${i}_sensitivity`).value;
+                        const position = document.getElementById(`ch${i}_position`).value;
+                        chParam += `,s${sensitivity},p${position}`;
+                        settings.sensitivity = sensitivity; // Store analog settings
+                        settings.position = position;
+                        
+                        // Only include trigger params for channel 0 if enabled
+                        if (i === 0) {
+                             const posTrig = document.getElementById('posTrigger').checked ? 1 : 0;
+                             const posThresh = document.getElementById('posTreshold').value;
+                             const negTrig = document.getElementById('negTrigger').checked ? 1 : 0;
+                             const negThresh = document.getElementById('negTreshold').value;
+                             // Add trigger params only if at least one trigger is enabled
+                             if (posTrig || negTrig) {
+                                chParam += `,pt${posTrig},ptt${posThresh},nt${negTrig},ntt${negThresh}`;
+                             }
+                        }
+                    }
+                    params.push(chParam);
+                    activeChannelSettings[i] = settings; // Store settings indexed by original channel index
+                }
+            }
+            console.log("Enabled Channel Indices:", enabledChannelIndices);
+            console.log("Active Channel Settings:", activeChannelSettings);
 
-							case '1':	// screen width = 10 s => horizontal frequency = 0,1 Hz, max 370 (2 signals) samples per screen => sampling interval = 27 ms, sampling frequency (2 signals) = 74 Hz
-									startCommand += '27 ms screen width = 10000 ms';
-									break;
-							case '2':	// screen width = 5 s => horizontal frequency = 0,2 Hz, max 357 (2 signals) samples per screen => sampling interval = 14 ms, sampling frequency (2 signals) = 142 Hz
-									startCommand += '21 ms screen width = 5000 ms';
-									break; 
-							case '3':	// screen width = 2 s => horizontal frequency = 0,5 Hz, max 333 (2 signals) samples per screen => sampling interval = 6 ms, sampling frequency (2 signals) = 322 Hz
-									startCommand += '6 ms screen width = 2000 ms'; 
-									break;
+            const startCommand = "GET /runOscilloscope?" + params.join("&"); // Build query string
 
-							// screen at a time mode from now on
-              // switch to measurements in us from now on, actual sampling rate may be lower than specified
-
-							case '4':	// screen width = 1 s => horizontal frequency = 1 Hz, 400 samples per screen => sampling interval = 2500 us, sampling frequency (1 signal) = 400 Hz
-									startCommand += '2500 us screen width = 1000000 us'; 
-									break;
-							case '5':	// screen width = 500 ms => horizontal frequency = 2 Hz, 400 samples per screen => sampling interval = 1250 us, sampling frequency (1 signal) = 800 Hz
-									startCommand += '1250 us screen width = 500000 us';
-									break;
-              case '6':	// screen width = 200 ms => horizontal frequency = 5 Hz, 400 samples per screen => sampling interval = 500 us, sampling frequency (1 signal) = 2 kHz
-									startCommand += '500 us screen width = 200000 us';
-									break;
-              case '7':	// screen width = 100 ms => horizontal frequency = 10 Hz, 400 samples per screen => sampling interval = 250 us, sampling frequency (1 signal) = 4 kHz
-									startCommand += '250 us screen width = 100000 us';
-									break;
-							case '8':	// screen width = 50 ms => horizontal frequency = 20 Hz, 400 samples per screen => sampling interval = 125 us, sampling frequency (1 signal) = 8 kHz
-									startCommand += '125 us screen width = 50000 us';
-									break;
-              case '9':	// screen width = 20 ms => horizontal frequency = 50 Hz, 400 samples per screen => sampling interval = 50 us, sampling frequency (1 signal) = 20 kHz
-									startCommand += '50 us screen width = 20000 us';
-									break;
-							case '10':	// screen width = 16 ms => horizontal frequency = 60 Hz, 388 samples per screen => sampling interval = 43 us, sampling frequency (1 signal) = 23,2 kHz
-  								startCommand += '43 us screen width = 16667 us'; 
-									break;
-              case '11':	// screen width = 10 ms => horizontal frequency = 100 Hz, 400 samples per screen => sampling interval = 25 us, sampling frequency (single signal) = 40 kHz
-                  startCommand += '25 us screen width = 10000 us';
-									break;
-							case '12':	// screen width = 5 ms => horizontal frequency = 200 Hz, 385 samples per screen => sampling interval = 13 us, sampling frequency = 76,9 kHz
-                  startCommand += '13 us screen width = 5000 us'; 
-									break;
-
-              // ESP32 can not sample faster than 150 kHz, we can only reduce the number of samples per screen
-          
-              case '13':	// screen width = 2 ms => horizontal frequency = 500 Hz, 372 samples per screen => sampling interval = 6 us, sampling frequency = 166,6 kHz
-                  startCommand += '7 us screen width = 2000 us'; 
-									break;
-              case '14':	// screen width = 1 ms => horizontal frequency = 1 kHz, 334 samples per screen => sampling interval = 3 us, sampling frequency = 333,3 kHz
-                  startCommand += '3 us screen width = 1000 us'; 
-									break;
-							case '15':	// screen width = 500 us => horizontal frequency = 2 kHz, 250 samples per screen => sampling interval = 2 us, sampling frequency = 500 kHz
-                  startCommand += '2 us screen width = 500 us'; 
-									break;
-							case '16':	// screen width = 200 us => horizontal frequency = 5 kHz, 200 samples per screen => sampling interval = 1 us, sampling frequency = 1 MHz
-                  startCommand += '1 us screen width = 200 us'; 
-									break;
-              case '17':	// screen width = 100 us => horizontal frequency = 10 kHz, 100 samples per screen => sampling interval = 1 us, sampling frequency = 1 MHz
-                  startCommand += '1 us screen width = 100 us'; 
-									break;
-						}
-						if (document.getElementById ('posTrigger').checked) startCommand += ' set positive slope trigger to ' + (document.getElementById ('analog').checked ? document.getElementById ('posTreshold').value : 1);
-						if (document.getElementById ('negTrigger').checked) startCommand += ' set negative slope trigger to ' + (document.getElementById ('analog').checked ? document.getElementById ('negTreshold').value : 0);
-
+						// --- Send new start command ---
+						console.log("Sending command: " + startCommand);
 						ws.send (startCommand);
+
           };
 
           ws.onmessage = function (evt) {
@@ -571,22 +675,20 @@
       var restartDrawingSignal;   // used for drawing the signal
       var screenTimeOffset;       // used for drawing the signal
 
-      var xOffset;
-      var xScale;
-      var yOffset;
-      var yScale;
-      var yLast;
+      // Global drawing parameters (calculated in drawBackgroundAndCalculateParameters)
+      var xOffset, xScale;
+      var globalYOffset_Analog, globalYScale_Analog; // For general grid reference
+      var digitalYOffset, digitalYScale; // Fixed scale for digital 0/1
 
       function drawBackgroundAndCalculateParameters () {
 
         resizeCanvas ();
 
-        var x;    // x coordinate
-        var y;    // y coordinate
-        var i;    // x coordinate in canvas units
-        var j;    // y coordinate in canas units
-        var yGridTick;
-        var gridTop;  // y value at the top of the grid
+        var x, y;    // time/value coordinates
+        var i, j;    // x/y coordinates in canvas units
+        var xGridTick, xLabel;
+        var analogYGridTick = 1000; // Base ticks for analog grid
+        var gridTop; // Top coordinate for vertical grid lines
 
         restartDrawingSignal = true;  // drawing parameter - for later use
         if (continuousSamplingTime == 0) {
@@ -600,166 +702,83 @@
 
         // colour background
         ctx.fillStyle = 'hsl(82, 90%, 10%)';
-        ctx.beginPath ();
-        ctx.moveTo (0, 0);
-        ctx.lineTo (canvas.width - 1, 0);
-        ctx.lineTo (canvas.width - 1, canvas.height - 1);
-        ctx.lineTo (0, canvas.height - 1);
-        ctx.fill ();
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // calculate drawing parametes and draw grid and scale
+        // Set grid style
         ctx.strokeStyle = 'hsl(82, 90%, 40%)';
         ctx.lineWidth = 1;
         ctx.font = '16px Verdana';
 
-        xOffset = 50;
+        // --- Calculate Global Parameters --- 
+        xOffset = 50; // Left margin for Y labels
+        // Calculate base analog scale/offset for the grid (0-4095 range)
+        globalYScale_Analog = -(canvas.height - 60) / 4096; // Use full range, leave margin top/bottom
+        globalYOffset_Analog = canvas.height - 30; // Position 0 near the bottom margin
+        // Calculate fixed digital scale/offset
+        digitalYScale = -(canvas.height - 100) / 1.5; // Give some vertical space for 0 and 1
+        digitalYOffset = canvas.height - 50; // Position 0 near the bottom
 
-        // draw analog signal grid
-
-        if (document.getElementById ('analog').checked) {
-
-          // signal sensitivity
-
-          yScale = -(canvas.height - 60) / 4096;
-          yGridTick = 1000;
-
-          switch (document.getElementById ('sensitivity').value) {
-            case '0': yScale *= 1; break;
-            case '1': yScale *= 2; break;
-            case '2': yScale *= 4; yGridTick = 200; break;
-            case '3': yScale *= 8; yGridTick = 200; break;
-            case '4': yScale *= 10; yGridTick = 100; break;
-            case '5': yScale *= 20; yGridTick = 100; break;
-          }
-
-          yOffset = canvas.height - 50 - parseInt (document.getElementById ('position').value) * yScale;
-          gridTop = yOffset + yScale * 4095 + 5;
-
-          // draw horizontal grid and scale
-
-          for (y = 0; y < 4096; y += yGridTick) {
-            j = yOffset + yScale * y;
-            ctx.strokeText (y.toString (), 5, j + 5);
+        // --- Draw Analog Grid --- (Based on global scale)
+        gridTop = globalYOffset_Analog + globalYScale_Analog * 4095; // Y position of value 4095
+        for (y = 0; y < 4096; y += analogYGridTick) {
+            j = globalYOffset_Analog + globalYScale_Analog * y;
+            ctx.strokeText (y.toString (), 5, j + 5); // Draw label
             ctx.beginPath ();
             ctx.moveTo (xOffset - 5, j);
-            ctx.lineTo (canvas.width, j);
+            ctx.lineTo (canvas.width, j); // Draw horizontal line
             ctx.stroke ();
-          }
-
-        // draw digital signal grid
-
-        } else {
-          yOffset = canvas.height - 100;
-          yScale = -(canvas.height - 200);
-          for (y = 0; y <= 1; y += 0.333333) {
-            j = yOffset + yScale * y;
-            ctx.beginPath ();
-            ctx.moveTo (xOffset - 5, j);
-            ctx.lineTo (canvas.width, j);
-            ctx.stroke ();
-          }
-          ctx.strokeText ('0', 5, yOffset + 5);
-          ctx.strokeText ('1', 5, yOffset + yScale * 1 + 5);
-          gridTop = yOffset + yScale * 1 - 25;
         }
 
-        // draw vertical grid and scale
-
+        // --- Draw Digital Grid Lines --- (At calculated positions for 0 and 1)
+        // Line for 0
+        j = digitalYOffset; 
+        ctx.strokeText ('0', xOffset - 20, j + 5); // Draw label slightly left of analog labels
+        ctx.beginPath ();
+        ctx.moveTo (xOffset - 5, j);
+        ctx.lineTo (canvas.width, j);
+        ctx.stroke ();
+        // Line for 1
+        j = digitalYOffset + digitalYScale * 1; 
+        ctx.strokeText ('1', xOffset - 20, j + 5); // Draw label slightly left of analog labels
+        ctx.beginPath ();
+        ctx.moveTo (xOffset - 5, j);
+        ctx.lineTo (canvas.width, j);
+        ctx.stroke ();
+        
+        // --- Draw Vertical Grid (Time) --- 
         switch (document.getElementById ('frequency').value) {
-
-          case '1': screenWidthTime = 10000; // (ms) horizontal frequency = 0,1 Hz, whole width = 10 s, grid tick width = 1 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '1 s';
-              break;
-          case '2': screenWidthTime = 5000; // (ms) horizontal frequency = 0,2 Hz, whole width = 5 s, grid tick width = 0,5 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '500 ms';
-              break;
-          case '3': screenWidthTime = 2000; // (ms) horizontal frequency = 0,5 Hz, whole width = 2 s, grid tick width = 0,2 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '200 ms';
-              break;
-          case '4': screenWidthTime = 1000000; // (us) horizontal frequency = 1 Hz, whole width = 1 s, grid tick width = 0,1 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '100 ms';
-              break;
-          case '5': screenWidthTime = 500000; // (us) horizontal frequency = 2 Hz, whole width = 0,5 s, grid tick width = 0,05 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '50 ms';
-              break;
-          case '6': screenWidthTime = 200000; // (us) horizontal frequency = 5 Hz, whole width = 0,2 s, grid tick width = 0,02 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '20 ms';
-              break;
-          case '7': screenWidthTime = 100000; // (us) horizontal frequency = 10 Hz, whole width = 0,1 s, grid tick width = 0,01 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '10 ms';
-              break;
-          case '8': screenWidthTime = 50000; // (us) horizontal frequency = 20 Hz, whole width = 0,05 s, grid tick width = 0,005 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '5 ms';
-              break;
-          case '9': screenWidthTime = 20000; // horizontal frequency = 50 Hz, whole width = 0,02 s, grid tick width = 0,002 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '2 ms';
-              break;
-          case '10':  screenWidthTime = 16667; // horizontal frequency = 60 Hz, whole width = 0,017 s, grid tick width = 0,002 s
-              xGridTick = 2000;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '2 ms';
-              break;
-          case '11':  screenWidthTime = 10000; // horizontal frequency = 100 Hz, whole width = 0,01 s, grid tick width = 0,001 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '1 ms';
-              break;
-          case '12':  screenWidthTime = 5000; // horizontal frequency = 200 Hz, whole width = 0,005 s, grid tick width = 0,0005 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '500 us';
-              break;
-          case '13':  screenWidthTime = 2000; // horizontal frequency = 500 Hz, whole width = 0,002 s, grid tick width = 0,0002 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '200 us';
-              break;
-          case '14':  screenWidthTime = 1000; // horizontal frequency = 1000 Hz, whole width = 0,001 s, grid tick width = 0,0001 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '100 us';
-              break;
-          case '15':  screenWidthTime = 500; // horizontal frequency = 2000 Hz, whole width = 0,00005 s, grid tick width = 0,00005 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '50 us';
-              break;
-          case '16':  screenWidthTime = 200; // horizontal frequency = 5000 Hz, whole width = 0,00002 s, grid tick width = 0,00002 s
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '20 us';
-              break;
-          case '17':  screenWidthTime = 100; // horizontal frequency = 10000 Hz, whole width = 0,0001 s (100 us), grid tick width = 0,0001 s (10 us)
-              xGridTick = screenWidthTime / 10;
-              xScale = (canvas.width - xOffset) / screenWidthTime;
-              xLabel = '10 us';
-              break;
+          // Cases 1-17 remain the same, calculating screenWidthTime, xGridTick, xScale, xLabel
+          case '1': screenWidthTime = 10000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '1 s'; break;
+          case '2': screenWidthTime = 5000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '500 ms'; break;
+          case '3': screenWidthTime = 2000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '200 ms'; break;
+          case '4': screenWidthTime = 1000000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '100 ms'; break;
+          case '5': screenWidthTime = 500000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '50 ms'; break;
+          case '6': screenWidthTime = 200000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '20 ms'; break;
+          case '7': screenWidthTime = 100000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '10 ms'; break;
+          case '8': screenWidthTime = 50000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '5 ms'; break;
+          case '9': screenWidthTime = 20000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '2 ms'; break;
+          case '10': screenWidthTime = 16667; xGridTick = 2000; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '2 ms'; break;
+          case '11': screenWidthTime = 10000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '1 ms'; break;
+          case '12': screenWidthTime = 5000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '500 us'; break;
+          case '13': screenWidthTime = 2000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '200 us'; break;
+          case '14': screenWidthTime = 1000; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '100 us'; break;
+          case '15': screenWidthTime = 500; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '50 us'; break;
+          case '16': screenWidthTime = 200; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '20 us'; break;
+          case '17': screenWidthTime = 100; xGridTick = screenWidthTime / 10; xScale = (canvas.width - xOffset) / screenWidthTime; xLabel = '10 us'; break;
+          default: console.error("Invalid frequency value"); return; // Should not happen
         }
 
-        for (x = 0; x < screenWidthTime; x += xGridTick) {
+        // Ensure vertical lines extend properly
+        let bottomGridLineY = globalYOffset_Analog; // Align with analog 0 line for bottom
+        let topGridLineY = gridTop; // Use the calculated top analog line
+
+        for (x = 0; x <= screenWidthTime; x += xGridTick) { // Include the last line
           i = xOffset + xScale * x;
-          ctx.strokeText (xLabel, i + 25, yOffset + 25);
+          // Draw label below the grid
+          ctx.strokeText (xLabel, i - (ctx.measureText(xLabel).width / 2) , bottomGridLineY + 25); 
           ctx.beginPath ();
-          ctx.moveTo (i, yOffset + 5);
-          ctx.lineTo (i, gridTop);
+          ctx.moveTo (i, bottomGridLineY + 5); // Start slightly below 0 line
+          ctx.lineTo (i, topGridLineY - 5);    // End slightly above top line
           ctx.stroke ();
         }
       }
@@ -767,10 +786,11 @@
       drawBackgroundAndCalculateParameters ();
 
       var lastI;  // last drawn sample (time)
-      var lastJ1; // signal 1
-      var lastJ2; // signal 2
+      var lastJ = []; // array for last Y values of active channels
+      var channelColors = ['#ffbf80', '#80bfff', '#80ff80', '#ff80ff']; // Example colors for 4 channels
+      var numActiveChannels = 0; // Will be set by the dummy message
 
-      var wordsPerSample = 1; // will be correctly initialized when dummy sample arrives: 2 for 1 signal, 3 for 2 signals
+      var wordsPerSample = 1; // Default, will be updated by dummy message
 
       function drawSignal (myInt16Array, startInd, endInd) { 
         if (startInd > endInd) return;
@@ -779,18 +799,38 @@
         // find dummy sample (the one with value < 0) which will tells javascript client to start drawing from beginning of the screen
         for (var ind = startInd; ind <= endInd; ind += wordsPerSample) {
           if (myInt16Array [ind] < 0) { // if signal value < 0 this is a dummy value which also holds the information about how numbers are stored in the buffer
-            switch (myInt16Array [ind]) {
-              case -2:  wordsPerSample = 2; // 1 signal (analog or digital) with deltaTime
-                        continuousSamplingTime = 0; // actual sambling wil be provided in the buffer
-                        break;
-              case -3:  wordsPerSample = 3; // 2 signals (analog or digital) with deltaTime
-                        continuousSamplingTime = 0; // actual sambling wil be provided in the buffer
-                        break;
-              default:  // < 0              // continuous (analog) sampling
-                        wordsPerSample = 1;
-                        continuousSamplingTime = -myInt16Array [ind]; // sampling time is provided in the dummy sample
-                        screenTimeOffset = -continuousSamplingTime; // so that the first real continuous sample will start at 0
+            
+            // --- NEW Dummy Message Handling --- 
+            // We assume a new format: 
+            // Negative value: -100 - numActiveChannels for non-continuous sampling
+            //                 -200 - samplingTime (us) for continuous sampling (implies 1 channel)
+            const dummyValue = myInt16Array[ind];
+
+            if (dummyValue <= -100 && dummyValue > -200) {
+                 numActiveChannels = -dummyValue - 100;
+                 wordsPerSample = numActiveChannels + 1; // N signals + 1 deltaTime
+                 continuousSamplingTime = 0;
+                 console.log(`Dummy: ${numActiveChannels} channels detected.`);
+            } else if (dummyValue <= -200) {
+                 numActiveChannels = 1; // Continuous implies 1 channel for now
+                 wordsPerSample = 1; // 1 signal, no deltaTime
+                 continuousSamplingTime = -dummyValue - 200;
+                 screenTimeOffset = -continuousSamplingTime; // Reset screen offset
+                 console.log(`Dummy: Continuous sampling detected, time = ${continuousSamplingTime}us`);
+            } else {
+                 console.warn("Unknown dummy value received:", dummyValue);
+                 // Fallback or error handling? For now, assume old format?
+                 // Let's try to handle old format as fallback:
+                 switch (dummyValue) {
+                    case -2: numActiveChannels = 1; wordsPerSample = 2; continuousSamplingTime = 0; break;
+                    case -3: numActiveChannels = 2; wordsPerSample = 3; continuousSamplingTime = 0; break;
+                    default: console.error("Unhandled dummy value!"); return; // Stop drawing
+                 }
             }
+            // Initialize lastJ array based on numActiveChannels
+            lastJ = new Array(numActiveChannels).fill(0);
+            // --- END NEW Dummy Message Handling ---
+
             // console.log ('Got dummy sample at ' + ind.toString () + ' value: ' + myInt16Array [ind].toString ());
             drawSignal (myInt16Array, startInd, ind - wordsPerSample); // to previuos sample
             drawBackgroundAndCalculateParameters ();
@@ -802,87 +842,97 @@
         var canvas = document.getElementById ('oscilloscope');
         var ctx = canvas.getContext ('2d');
 
-        var analog = document.getElementById ('analog').checked;
         var lines = document.getElementById ('lines').checked;
         var markers = document.getElementById ('markers').checked;
 
         ctx.lineWidth = 3;
 
-        // console.log ('arayBufferType = ' + arayBufferType.toString ());
         for (var ind = startInd; ind <= endInd; ind += wordsPerSample) { 
 
-          // calculate sample position
-          if (continuousSamplingTime == 0) {
-              screenTimeOffset += myInt16Array [ind + wordsPerSample - 1]; // deltaTime is provided in the buffer
-          } else {
+          // calculate sample position (time)
+          if (continuousSamplingTime == 0 && wordsPerSample > numActiveChannels) {
+              // Check prevents error if wordsPerSample is 1 (continuous)
+              screenTimeOffset += myInt16Array [ind + numActiveChannels]; // deltaTime is the last value
+          } else if (continuousSamplingTime > 0) {
               screenTimeOffset += continuousSamplingTime; // continouus sampling
           }
 
-          i = xOffset + xScale * screenTimeOffset;   // time
-          j1 = yOffset + yScale * myInt16Array [ind]; // signal 1
-          j2 = wordsPerSample >= 3 ? yOffset + yScale * myInt16Array [ind + 1] : -1; // signal 2, -1 if missing
-
-          // lines
-          if (lines) {
-            if (restartDrawingSignal) {
-              restartDrawingSignal = false;
-            } else {
-              if (analog) { // analog
-                // signal 2
-                if (j2 >= 0) {
-                  ctx.strokeStyle = '#ff8000';
-                  ctx.beginPath ();
-                  ctx.moveTo (lastI, lastJ2);
-                  ctx.lineTo (i, j2);
-                  ctx.stroke ();
-                }
-                // signal 1
-                ctx.strokeStyle = '#ffbf80';
-                ctx.beginPath ();
-                ctx.moveTo (lastI, lastJ1);
-                ctx.lineTo (i, j1);
-                ctx.stroke ();
-              } else { // digital
-                // signal 2
-                if (j2 >= 0) {
-                  ctx.strokeStyle = '#ff8000';
-                  ctx.beginPath ();
-                  ctx.moveTo (lastI, lastJ2);
-                  ctx.lineTo (i, lastJ2);
-                  ctx.lineTo (i, j2);
-                  ctx.stroke ();
-                }
-                // signal 1
-                ctx.strokeStyle = '#ffbf80';
-                ctx.beginPath ();
-                ctx.moveTo (lastI, lastJ1);
-                ctx.lineTo (i, lastJ1);
-                ctx.lineTo (i, j1);
-                ctx.stroke ();
+          i = xOffset + xScale * screenTimeOffset;   // time coordinate
+          
+          let currentJ = []; // Temporary array for current Y values
+          for(let ch = 0; ch < numActiveChannels; ch++) {
+              // Map data stream index (ch) to original channel index (0-3)
+              const originalChIndex = enabledChannelIndices[ch]; 
+              if (originalChIndex === undefined) {
+                  console.error(`Error: Could not find original index for data channel ${ch}`);
+                  continue; // Skip drawing this channel
               }
-            }
+              const settings = activeChannelSettings[originalChIndex];
+              if (!settings) {
+                  console.error(`Error: Could not find settings for original channel ${originalChIndex}`);
+                  continue; // Skip drawing this channel
+              }
 
+              const isAnalogCh = (settings.type === 'analog');
+              let yValue = myInt16Array[ind + ch];
+              let j; // Y coordinate on canvas
+
+              if (isAnalogCh) {
+                  // Calculate channel-specific scale and offset
+                  let channelYScale = -(canvas.height - 60) / 4096; // Base scale
+                  switch (settings.sensitivity) { // Apply sensitivity scaling
+                      case '0': /* channelYScale *= 1; */ break; // 100%
+                      case '1': channelYScale *= 2; break; // 200%
+                      case '2': channelYScale *= 4; break; // 400%
+                      case '3': channelYScale *= 8; break; // 800% (Adjusted from 1000% for powers of 2? Check original logic) - Assuming 800%
+                      case '4': channelYScale *= 10; break; // 1000% (Adjusted from 2000%?) - Assuming 1000%
+                      case '5': channelYScale *= 20; break; // 2000% (Adjusted from 4000%?) - Assuming 2000%
+                      // NOTE: The sensitivity values might need review based on the old vs new scale factors
+                  }
+                  let channelYOffset = canvas.height - 50 - parseInt(settings.position) * channelYScale;
+                  j = channelYOffset + channelYScale * yValue;
+              } else {
+                  // Use pre-calculated global digital scale/offset
+                  // Ensure digitalYOffset and digitalYScale are correctly set in drawBackgroundAndCalculateParameters
+                  if (digitalYOffset === undefined || digitalYScale === undefined) {
+                     console.warn("Digital scale/offset not calculated yet.");
+                     // Temporary fallback: map 0 to bottom, 1 to top-ish
+                     j = (yValue === 0) ? canvas.height - 50 : 50;
+                  } else {
+                     j = digitalYOffset + digitalYScale * yValue;
+                  }
+              }
+              currentJ.push(j);
+
+              // Draw Lines
+              if (lines && !restartDrawingSignal && lastJ[ch] !== undefined) { // Add check for defined lastJ
+                  ctx.strokeStyle = channelColors[originalChIndex % channelColors.length]; // Use color based on original index
+                  ctx.beginPath();
+                  ctx.moveTo(lastI, lastJ[ch]);
+                  if (isAnalogCh) {
+                      ctx.lineTo(i, j);
+                  } else { // Digital
+                      ctx.lineTo(i, lastJ[ch]); // Horizontal line first
+                      ctx.lineTo(i, j);         // Then vertical line
+                  }
+                  ctx.stroke();
+              }
+
+              // Draw Markers
+              if (markers) {
+                   ctx.strokeStyle = channelColors[originalChIndex % channelColors.length]; // Use color based on original index
+                   ctx.beginPath();
+                   ctx.arc(i, j, 2, 0, 2 * Math.PI, false);
+                   ctx.stroke();
+              }
           }
 
-          // markers
-          if (markers) {
-            // signal 2
-            if (j2 >= 0) {
-              ctx.strokeStyle = '#ff8000';
-              ctx.beginPath ();
-              ctx.arc (i, j2, 2, 0, 2 * Math.PI, false);
-              ctx.stroke ();
-            }
-            // signal 1
-            ctx.strokeStyle = '#ffbf80';
-            ctx.beginPath ();
-            ctx.arc (i, j1, 2, 0, 2 * Math.PI, false);
-            ctx.stroke ();
+          if (restartDrawingSignal) {
+              restartDrawingSignal = false; // Set flag after processing first point
           }
 
           lastI = i;
-          lastJ1 = j1;
-          lastJ2 = j2;
+          lastJ = currentJ; // Update last positions for all channels
         }
 
       }
@@ -890,46 +940,125 @@
       // eneable and disable controls
 
       function enableDisableControls (workMode) {
-        if (workMode) {
-          // disable GPIO, analog/digital, trigger, frequency and start, enable stop
-          document.getElementById ('gpio1').disabled = true;
-          document.getElementById ('gpio2').disabled = true;
-          document.getElementById ('analog').disabled = true;
-          document.getElementById ('digital').disabled = true;
-          document.getElementById ('posTrigger').disabled = true;
-          document.getElementById ('posTreshold').disabled = true;
-          document.getElementById ('posTriggerLabel').style.color = 'gray';
-          document.getElementById ('negTrigger').disabled = true;
-          document.getElementById ('negTreshold').disabled = true;
-          document.getElementById ('negTriggerLabel').style.color = 'gray';
-          document.getElementById ('frequency').disabled = true;
-          document.getElementById ('frequencyLabel').style.color = 'gray';
-          document.getElementById ('startButton').disabled = true;
-          document.getElementById ('stopButton').disabled = false;
-        } else {
-          // enable GPIO, analog/digital, trigger, frequency and start, disable stop
-          document.getElementById ('gpio1').disabled = false;
-          document.getElementById ('gpio2').disabled = false;
-          document.getElementById ('analog').disabled = false;
-          document.getElementById ('digital').disabled = false;
-          document.getElementById ('posTrigger').disabled = false;
-          document.getElementById ('negTrigger').disabled = false;
-          document.getElementById ('frequency').disabled = false;
-          document.getElementById ('frequencyLabel').style.color = 'black';
-          document.getElementById ('startButton').disabled = false;
-          document.getElementById ('stopButton').disabled = true;
-          if (document.getElementById ('analog').checked) {
-            document.getElementById ('sensitivity').disabled = false;
-            document.getElementById ('sensitivityLabel').style.color = 'black';
-            document.getElementById ('position').disabled = false;
-            document.getElementById ('positionLabel').style.color = 'black';
-            document.getElementById ('posTreshold').disabled = false;
-            document.getElementById ('posTriggerLabel').style.color = 'black';
-            document.getElementById ('negTreshold').disabled = false;
-            document.getElementById ('negTriggerLabel').style.color = 'black';
-          }
+        // Global controls
+        document.getElementById ('frequency').disabled = workMode;
+        document.getElementById ('frequencyLabel').style.color = workMode ? 'gray' : 'black';
+        document.getElementById ('startButton').disabled = workMode;
+        document.getElementById ('stopButton').disabled = !workMode;
+        
+        // Trigger controls (linked to Channel 0 state)
+        const ch0Enabled = document.getElementById('ch0_enable').checked;
+        const ch0IsAnalog = document.getElementById('ch0_analog').checked;
+        const triggerActive = ch0Enabled && ch0IsAnalog; // Triggers are active only if Ch0 is enabled and analog
+        
+        document.getElementById('posTrigger').disabled = workMode || !triggerActive;
+        document.getElementById('negTrigger').disabled = workMode || !triggerActive;
+        document.getElementById('posTreshold').disabled = workMode || !triggerActive || !document.getElementById('posTrigger').checked;
+        document.getElementById('negTreshold').disabled = workMode || !triggerActive || !document.getElementById('negTrigger').checked;
+        document.getElementById ('posTriggerLabel').style.color = (workMode || !triggerActive) ? 'gray' : 'black';
+        document.getElementById ('negTriggerLabel').style.color = (workMode || !triggerActive) ? 'gray' : 'black';
+
+        // Channel-specific controls
+        for (let i = 0; i < MAX_CHANNELS; i++) {
+            const isEnabled = document.getElementById(`ch${i}_enable`).checked;
+            const isAnalog = document.getElementById(`ch${i}_analog`).checked;
+
+            document.getElementById(`ch${i}_enable`).disabled = workMode; // Can't change enable state while running
+            
+            // Only enable controls if the channel itself is enabled *and* oscilloscope is not running
+            const controlsShouldBeEnabled = !workMode && isEnabled;
+            
+            document.getElementById(`ch${i}_gpio`).disabled = !controlsShouldBeEnabled;
+            document.getElementById(`ch${i}_analog`).disabled = !controlsShouldBeEnabled;
+            document.getElementById(`ch${i}_digital`).disabled = !controlsShouldBeEnabled;
+            
+            // Analog specific controls (Sensitivity/Position)
+            const analogControlsEnabled = controlsShouldBeEnabled && isAnalog;
+            document.getElementById(`ch${i}_sensitivity`).disabled = !analogControlsEnabled;
+            document.getElementById(`ch${i}_position`).disabled = !analogControlsEnabled;
+            // Also update display style for analog controls container based on isEnabled & isAnalog & !workMode
+             const analogControls = document.getElementById(`ch${i}_analog_controls`);
+             if (isEnabled && isAnalog && !workMode) {
+                 analogControls.style.display = 'inline'; // Or 'block' if preferred layout
+             } else {
+                 analogControls.style.display = 'none';
+             }
         }
       }
+
+      // --- New JS Functions for Multi-Channel UI ---
+      const MAX_CHANNELS = 4; // Should match backend
+
+      function toggleChannelControls(channelIndex) {
+          const enabled = document.getElementById(`ch${channelIndex}_enable`).checked;
+          document.getElementById(`ch${channelIndex}_gpio`).disabled = !enabled;
+          document.getElementById(`ch${channelIndex}_analog`).disabled = !enabled;
+          document.getElementById(`ch${channelIndex}_digital`).disabled = !enabled;
+          // Only toggle analog controls if the channel is enabled
+          if (enabled) {
+              toggleAnalogControls(channelIndex);
+          } else {
+              // Ensure analog controls are hidden and disabled if channel is disabled
+              const analogControls = document.getElementById(`ch${channelIndex}_analog_controls`);
+              analogControls.style.display = 'none';
+              document.getElementById(`ch${channelIndex}_sensitivity`).disabled = true;
+              document.getElementById(`ch${channelIndex}_position`).disabled = true;
+          }
+          // Special handling for trigger controls (only on channel 0 for now)
+          if (channelIndex === 0) {
+              toggleTriggerControls(channelIndex);
+          }
+      }
+
+      function toggleAnalogControls(channelIndex) {
+          const isAnalog = document.getElementById(`ch${channelIndex}_analog`).checked;
+          const analogControls = document.getElementById(`ch${channelIndex}_analog_controls`);
+          const sensitivitySlider = document.getElementById(`ch${channelIndex}_sensitivity`);
+          const positionSlider = document.getElementById(`ch${channelIndex}_position`);
+
+          if (isAnalog && document.getElementById(`ch${channelIndex}_enable`).checked) {
+              analogControls.style.display = 'inline'; // Or 'block'
+              sensitivitySlider.disabled = false;
+              positionSlider.disabled = false;
+          } else {
+              analogControls.style.display = 'none';
+              sensitivitySlider.disabled = true;
+              positionSlider.disabled = true;
+          }
+          // Special handling for trigger controls (only on channel 0 analog for now)
+          if (channelIndex === 0) {
+              toggleTriggerControls(channelIndex);
+          }
+      }
+
+      function toggleTriggerControls(channelIndex) {
+          // Currently, triggers are only linked to channel 0 and only if it's enabled and analog
+          const ch0Enabled = document.getElementById(`ch0_enable`).checked;
+          const ch0IsAnalog = document.getElementById(`ch0_analog`).checked;
+          const triggersEnabled = ch0Enabled && ch0IsAnalog;
+
+          document.getElementById('posTrigger').disabled = !triggersEnabled;
+          document.getElementById('negTrigger').disabled = !triggersEnabled;
+
+          // Only enable threshold sliders if the respective trigger is checked AND overall triggers are enabled
+          document.getElementById('posTreshold').disabled = !(triggersEnabled && document.getElementById('posTrigger').checked);
+          document.getElementById('negTreshold').disabled = !(triggersEnabled && document.getElementById('negTrigger').checked);
+      }
+
+       function updateSensitivityLabel(channelIndex) {
+          const value = document.getElementById(`ch${channelIndex}_sensitivity`).value;
+          document.getElementById(`ch${channelIndex}_sensitivityLabel`).textContent = sensitivityLabelFromSensitivitySlider(value);
+          // Optional: Redraw background if needed immediately
+          // drawBackgroundAndCalculateParameters(); 
+      }
+
+      function updatePositionLabel(channelIndex) {
+          const value = document.getElementById(`ch${channelIndex}_position`).value;
+          document.getElementById(`ch${channelIndex}_positionLabel`).textContent = value;
+          // Optional: Redraw background if needed immediately
+          // drawBackgroundAndCalculateParameters();
+      }
+      // --- End New JS Functions ---
 
     </script>
   </body>
