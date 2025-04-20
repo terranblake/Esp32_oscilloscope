@@ -1158,7 +1158,7 @@
       bool parseOk = false;
       bool anyAnalogActive = false;
       bool anyDigitalActive = false;
-      // adc_oneshot_unit_handle_t adc1_handle = NULL; // Will be added in next step
+      adc_oneshot_unit_handle_t adc1_handle = NULL; // << Initialize ADC handle here
 
       // Allocate JsonDocument. Adjust size as needed.
       JsonDocument doc;
@@ -1199,40 +1199,40 @@
       // --- Define gpio_to_adc1_channel helper function (ensure it's before runOscilloscope) ---
       // NOTE: This function needs to be moved *outside* runOscilloscope, maybe near the top of the file.
       // Placing it here temporarily for the edit tool.
-      auto gpio_to_adc1_channel = [](gpio_num_t gpio, adc1_channel_t *channel) -> esp_err_t {
-           switch (gpio) {
-               #if CONFIG_IDF_TARGET_ESP32
-                   case 36: *channel = ADC1_CHANNEL_0; return ESP_OK;
-                   case 37: *channel = ADC1_CHANNEL_1; return ESP_OK;
-                   case 38: *channel = ADC1_CHANNEL_2; return ESP_OK;
-                   case 39: *channel = ADC1_CHANNEL_3; return ESP_OK;
-                   case 32: *channel = ADC1_CHANNEL_4; return ESP_OK;
-                   case 33: *channel = ADC1_CHANNEL_5; return ESP_OK;
-                   case 34: *channel = ADC1_CHANNEL_6; return ESP_OK;
-                   case 35: *channel = ADC1_CHANNEL_7; return ESP_OK;
-               #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-                   case  1: *channel = ADC1_CHANNEL_0; return ESP_OK;
-                   case  2: *channel = ADC1_CHANNEL_1; return ESP_OK;
-                   case  3: *channel = ADC1_CHANNEL_2; return ESP_OK;
-                   case  4: *channel = ADC1_CHANNEL_3; return ESP_OK;
-                   case  5: *channel = ADC1_CHANNEL_4; return ESP_OK;
-                   case  6: *channel = ADC1_CHANNEL_5; return ESP_OK;
-                   case  7: *channel = ADC1_CHANNEL_6; return ESP_OK;
-                   case  8: *channel = ADC1_CHANNEL_7; return ESP_OK;
-                   case  9: *channel = ADC1_CHANNEL_8; return ESP_OK;
-                   case 10: *channel = ADC1_CHANNEL_9; return ESP_OK;
-               #elif CONFIG_IDF_TARGET_ESP32C3
-                    case  0: *channel = ADC1_CHANNEL_0; return ESP_OK;
-                    case  1: *channel = ADC1_CHANNEL_1; return ESP_OK;
-                    case  2: *channel = ADC1_CHANNEL_2; return ESP_OK;
-                    case  3: *channel = ADC1_CHANNEL_3; return ESP_OK;
-                    case  4: *channel = ADC1_CHANNEL_4; return ESP_OK;
-               #else
-                   // Add other supported targets if necessary
-               #endif
-               default: return ESP_ERR_INVALID_ARG; // GPIO not valid for ADC1
-           }
-       };
+      static esp_err_t gpio_to_adc1_channel(gpio_num_t gpio, adc1_channel_t *channel) {
+          switch (gpio) {
+              #if CONFIG_IDF_TARGET_ESP32
+                  case 36: *channel = ADC1_CHANNEL_0; return ESP_OK;
+                  case 37: *channel = ADC1_CHANNEL_1; return ESP_OK;
+                  case 38: *channel = ADC1_CHANNEL_2; return ESP_OK;
+                  case 39: *channel = ADC1_CHANNEL_3; return ESP_OK;
+                  case 32: *channel = ADC1_CHANNEL_4; return ESP_OK;
+                  case 33: *channel = ADC1_CHANNEL_5; return ESP_OK;
+                  case 34: *channel = ADC1_CHANNEL_6; return ESP_OK;
+                  case 35: *channel = ADC1_CHANNEL_7; return ESP_OK;
+              #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+                  case  1: *channel = ADC1_CHANNEL_0; return ESP_OK;
+                  case  2: *channel = ADC1_CHANNEL_1; return ESP_OK;
+                  case  3: *channel = ADC1_CHANNEL_2; return ESP_OK;
+                  case  4: *channel = ADC1_CHANNEL_3; return ESP_OK;
+                  case  5: *channel = ADC1_CHANNEL_4; return ESP_OK;
+                  case  6: *channel = ADC1_CHANNEL_5; return ESP_OK;
+                  case  7: *channel = ADC1_CHANNEL_6; return ESP_OK;
+                  case  8: *channel = ADC1_CHANNEL_7; return ESP_OK;
+                  case  9: *channel = ADC1_CHANNEL_8; return ESP_OK;
+                  case 10: *channel = ADC1_CHANNEL_9; return ESP_OK;
+              #elif CONFIG_IDF_TARGET_ESP32C3
+                   case  0: *channel = ADC1_CHANNEL_0; return ESP_OK;
+                   case  1: *channel = ADC1_CHANNEL_1; return ESP_OK;
+                   case  2: *channel = ADC1_CHANNEL_2; return ESP_OK;
+                   case  3: *channel = ADC1_CHANNEL_3; return ESP_OK;
+                   case  4: *channel = ADC1_CHANNEL_4; return ESP_OK;
+              #else
+                  // Add other supported targets if necessary
+              #endif
+              default: return ESP_ERR_INVALID_ARG; // GPIO not valid for ADC1
+          }
+      }
       // --- End of helper function definition ---
 
 
@@ -1324,7 +1324,91 @@
           }
       }
 
-      // Hardware setup, task selection, start & cleanup will be added in subsequent edits.
+      // --- Hardware Setup (Added in this step) ---
+      esp_err_t setup_err = ESP_OK;
+
+      // Configure ADC Unit and Channels if any analog channel is active
+      if (anyAnalogActive) {
+          __oscilloscope_h_debug__("Setting up ADC1 for Oneshot mode.");
+          adc_oneshot_unit_init_cfg_t init_config1 = {
+              .unit_id = ADC_UNIT_1
+          };
+          setup_err = adc_oneshot_new_unit(&init_config1, &adc1_handle);
+          if (setup_err != ESP_OK) {
+              char errorMsg[100];
+              snprintf(errorMsg, sizeof(errorMsg), "[oscilloscope] Failed to initialize ADC1 unit: %s", esp_err_to_name(setup_err));
+              __oscilloscope_h_debug__(errorMsg);
+              webSocket->sendString(errorMsg);
+              return;
+          }
+
+          adc_oneshot_chan_cfg_t config = {
+              .atten = ADC_ATTEN_DB_11, // Use 11dB attenuation (~0-3.1V range on ESP32)
+              .bitwidth = ADC_BITWIDTH_12
+          };
+
+          for (int i = 0; i < MAX_OSC_CHANNELS; ++i) {
+              if (sharedMemory.channelConfig[i].is_active && sharedMemory.channelConfig[i].is_analog) {
+                  setup_err = adc_oneshot_config_channel(adc1_handle, sharedMemory.channelConfig[i].adc_channel, &config);
+                   if (setup_err != ESP_OK) {
+                       char errorMsg[150];
+                       snprintf(errorMsg, sizeof(errorMsg), "[oscilloscope] Failed to configure ADC1 channel %d (GPIO %d): %s",
+                                (int)sharedMemory.channelConfig[i].adc_channel, (int)sharedMemory.channelConfig[i].gpio, esp_err_to_name(setup_err));
+                       __oscilloscope_h_debug__(errorMsg);
+                       webSocket->sendString(errorMsg);
+                       adc_oneshot_del_unit(adc1_handle); // Clean up allocated unit
+                       return;
+                   }
+                   sharedMemory.channelConfig[i].adc_handle = adc1_handle; // Store handle for the reader task
+                   __oscilloscope_h_debug__(("Configured ADC1 Chan " + String(sharedMemory.channelConfig[i].adc_channel) + " for GPIO " + String(sharedMemory.channelConfig[i].gpio)).c_str());
+              }
+          }
+      }
+
+      // Configure GPIOs for Digital Inputs if any digital channel is active
+      if (anyDigitalActive) {
+          uint64_t digital_pin_mask = 0;
+          for (int i = 0; i < MAX_OSC_CHANNELS; ++i) {
+              if (sharedMemory.channelConfig[i].is_active && !sharedMemory.channelConfig[i].is_analog) {
+                  // Ensure the GPIO is valid for digital input (most are, but good practice)
+                  if (!GPIO_IS_VALID_GPIO(sharedMemory.channelConfig[i].gpio)) {
+                        char errorMsg[100];
+                        snprintf(errorMsg, sizeof(errorMsg), "[oscilloscope] Invalid GPIO %d for digital input on channel %d.", (int)sharedMemory.channelConfig[i].gpio, i);
+                        __oscilloscope_h_debug__(errorMsg);
+                        webSocket->sendString(errorMsg);
+                        if(adc1_handle) adc_oneshot_del_unit(adc1_handle); // Clean up ADC if initialized
+                        return;
+                  }
+                  digital_pin_mask |= (1ULL << sharedMemory.channelConfig[i].gpio);
+                  __oscilloscope_h_debug__(("Queueing GPIO " + String(sharedMemory.channelConfig[i].gpio) + " for digital input config.").c_str());
+              }
+          }
+
+          if (digital_pin_mask != 0) {
+              __oscilloscope_h_debug__(("Configuring digital GPIO mask: " + String((unsigned long long)digital_pin_mask, HEX)).c_str());
+              gpio_config_t io_conf = {};
+              io_conf.pin_bit_mask = digital_pin_mask;
+              io_conf.mode = GPIO_MODE_INPUT;
+              io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+              io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE; // Often good to pull down digital inputs if floating
+              io_conf.intr_type = GPIO_INTR_DISABLE;
+              setup_err = gpio_config(&io_conf);
+              if (setup_err != ESP_OK) {
+                   char errorMsg[100];
+                   snprintf(errorMsg, sizeof(errorMsg), "[oscilloscope] Failed to configure digital GPIOs: %s", esp_err_to_name(setup_err));
+                   __oscilloscope_h_debug__(errorMsg);
+                   webSocket->sendString(errorMsg);
+                   if(adc1_handle) adc_oneshot_del_unit(adc1_handle); // Clean up ADC if initialized
+                   return;
+              }
+               __oscilloscope_h_debug__("Digital GPIOs configured.");
+          }
+      }
+      // --- End Hardware Setup ---
+
+
+      // Hardware setup, task selection, start & cleanup will be added in subsequent edits. // <<< Update comment
+      // Task selection, start & cleanup will be added in subsequent edits.
       parseOk = true; // Mark parsing as successful for now
       // --- END NEW PARSING LOGIC ---
 
